@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <wayland-server-core.h>
 
+#include "Config_stub.h"
+
 #define WLR_USE_UNSTABLE
 
 #include <wlr/backend.h>
@@ -194,6 +196,8 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 			wl_container_of(server->toplevels.prev, next_toplevel, link);
 		focus_toplevel(next_toplevel);
 		break;
+	case XKB_KEY_2:
+    	hello();
 	default:
 		return false;
 	}
@@ -875,6 +879,7 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 }
 
 int main(int argc, char *argv[]) {
+    hs_init(&argc, &argv);
 	wlr_log_init(WLR_DEBUG, NULL);
 	char *startup_cmd = NULL;
 
@@ -1083,5 +1088,6 @@ int main(int argc, char *argv[]) {
 	wlr_renderer_destroy(server.renderer);
 	wlr_backend_destroy(server.backend);
 	wl_display_destroy(server.wl_display);
+	hs_exit();
 	return 0;
 }

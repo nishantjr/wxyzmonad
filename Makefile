@@ -17,10 +17,9 @@ xdg-shell-protocol.h:
 		$(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
 tinywl.o: tinywl.c xdg-shell-protocol.h
-	$(CC) -c $< -g -Werror $(CFLAGS) -I. -DWLR_USE_UNSTABLE -o $@
+	ghc -c $< -g -Werror $(CFLAGS) -I. -o $@
 tinywl: tinywl.o
-	$(CC) $^ $> -g -Werror $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@
-
+	ghc --make -no-hs-main $^ $> -g -Werror $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@
 clean:
 	rm -f tinywl tinywl.o xdg-shell-protocol.h
 

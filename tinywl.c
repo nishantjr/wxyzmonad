@@ -6,6 +6,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <wayland-server-core.h>
+
+#define WLR_USE_UNSTABLE
+
 #include <wlr/backend.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>

@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <wayland-server-core.h>
 
-#include "Config_stub.h"
+#include "Lib_stub.h"
 
 #define WLR_USE_UNSTABLE
 
@@ -196,8 +196,9 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 			wl_container_of(server->toplevels.prev, next_toplevel, link);
 		focus_toplevel(next_toplevel);
 		break;
-	case XKB_KEY_2:
-    	hello();
+	case XKB_KEY_1:
+		wl_display_terminate(server->wl_display);
+		break;
 	default:
 		return false;
 	}
@@ -222,12 +223,9 @@ static void keyboard_handle_key(
 
 	bool handled = false;
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
-	if ((modifiers & WLR_MODIFIER_ALT) &&
-			event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-		/* If alt is held down and this button was _pressed_, we attempt to
-		 * process it as a compositor keybinding. */
+	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
 		for (int i = 0; i < nsyms; i++) {
-			handled = handle_keybinding(server, syms[i]);
+			handled = handle_keysym(modifiers, syms[i]);
 		}
 	}
 
@@ -878,6 +876,25 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 	wl_signal_add(&xdg_popup->events.destroy, &popup->destroy);
 }
 
+/* ------------------------------------------------------------------------- */
+// HACK: For now, instead of associating a pointer to tinywl_server with
+// the WXYZMonad, we use global veriables.
+
+struct tinywl_server* global_server = NULL;
+void wxyz_terminate() {
+    wl_display_terminate(global_server->wl_display);
+}
+
+void wxyz_next_toplevel() {
+	/* Cycle to the next toplevel */
+	if (wl_list_length(&global_server->toplevels) < 2) { return; }
+	struct tinywl_toplevel *next_toplevel =
+		wl_container_of(global_server->toplevels.prev, next_toplevel, link);
+	focus_toplevel(next_toplevel);
+}
+
+/* ------------------------------------------------------------------------- */
+
 int main(int argc, char *argv[]) {
     hs_init(&argc, &argv);
 	wlr_log_init(WLR_DEBUG, NULL);
@@ -900,6 +917,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	struct tinywl_server server = {0};
+	global_server = &server;
+
 	/* The Wayland display is managed by libwayland. It handles accepting
 	 * clients from the Unix socket, manging Wayland globals, and so on. */
 	server.wl_display = wl_display_create();
@@ -1091,3 +1110,4 @@ int main(int argc, char *argv[]) {
 	hs_exit();
 	return 0;
 }
+

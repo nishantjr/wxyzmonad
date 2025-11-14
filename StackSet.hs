@@ -12,7 +12,7 @@
 -- Portability :  portable, Haskell 98
 --
 
-module XMonad.StackSet (
+module StackSet (
         -- * Introduction
         -- $intro
 

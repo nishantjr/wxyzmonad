@@ -70,7 +70,7 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     --   instances of 'LayoutClass' probably do not need to implement
     --   'runLayout'; it is only useful for layouts which wish to make
     --   use of more of the 'Workspace' information (for example,
-    --   "WXMonad.Layout.PerWorkspace").
+    --   "XMonad.Layout.PerWorkspace").
     runLayout :: Workspace WorkspaceId (layout a) a
               -> Rectangle
               -> WXYZMonad ([(a, Rectangle)], Maybe (layout a))

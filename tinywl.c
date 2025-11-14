@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <wayland-server-core.h>
 
-#include "Lib_stub.h"
+#include "Glue_stub.h"
 
 #define WLR_USE_UNSTABLE
 

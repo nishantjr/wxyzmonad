@@ -21,12 +21,12 @@ xdg-shell-protocol.h:
 
 %.hs: %.hsc
 	hsc2hs -o $@ $< $(CFLAGS)
-Lib.hsc : WXYZMonad.o
+Glue.hsc : WXYZMonad.o Config.o
 
-tinywl.o: tinywl.c xdg-shell-protocol.h Lib.o # Need to depend on Lib_stub.h actually
+tinywl.o: tinywl.c xdg-shell-protocol.h Glue.o # Need to depend on Glue_stub.h actually
 	ghc -c $< -g -Werror $(CFLAGS) -I. -o $@
 
-tinywl: tinywl.o Lib.o Layout.o StackSet.o Tiling.o WXYZMonad.o
+tinywl: tinywl.o Config.o Glue.o Layout.o StackSet.o Tiling.o WXYZMonad.o
 	ghc --make -no-hs-main $^ $> -g -Werror $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ -package containers -package process
 
 clean:

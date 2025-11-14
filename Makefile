@@ -25,7 +25,7 @@ xdg-shell-protocol.h:
 tinywl.o: tinywl.c xdg-shell-protocol.h Lib.o
 	ghc -c $< -g -Werror $(CFLAGS) -I. -o $@
 
-tinywl: tinywl.o Lib.o
+tinywl: tinywl.o Lib.o StackSet.o
 	ghc --make -no-hs-main $^ $> -g -Werror $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ -package containers -package process
 
 clean:

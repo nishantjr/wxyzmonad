@@ -48,9 +48,9 @@ type WXYZMonad = IO
 -- Operations that a user's configuration may perform
 -----------------------------------------------------
 
-foreign import capi "lib.h wxyz_terminate"
+foreign import capi "tinywl.h wxyz_terminate"
     terminate :: WXYZMonad ()
-foreign import capi "lib.h wxyz_next_toplevel"
+foreign import capi "tinywl.h wxyz_next_toplevel"
     next_toplevel :: WXYZMonad ()
 
 shell :: String -> WXYZMonad ()

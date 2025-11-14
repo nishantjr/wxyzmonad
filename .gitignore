@@ -1,9 +1,5 @@
-tinywl
-tinywl.o
-Config.o
-Config.hi
-Config_stub.h
-*-protocol.h
-
-
-
+/tinywl
+/*.o
+/*.hi
+/*_stub.h
+/*-protocol.h

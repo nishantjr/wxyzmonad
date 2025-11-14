@@ -1,4 +1,15 @@
-module Layout () where
+module Layout
+        ( Dimension
+        , Layout(..)
+        , LayoutClass(..)
+        , LayoutMessages(..)
+        , Message
+        , Position
+        , Rectangle(..)
+        , SomeMessage(..)
+        , fromMessage
+        )
+    where
 
 import StackSet hiding (modify)
 import Lib (WXYZMonad)

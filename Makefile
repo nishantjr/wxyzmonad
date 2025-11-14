@@ -21,9 +21,8 @@ xdg-shell-protocol.h:
 
 %.hs: %.hsc
 	hsc2hs -o $@ $< $(CFLAGS)
-Glue.hsc : WXYZMonad.o Config.o
 
-tinywl.o: tinywl.c xdg-shell-protocol.h Glue.o # Need to depend on Glue_stub.h actually
+tinywl.o: tinywl.c xdg-shell-protocol.h
 	ghc -c $< -g -Werror $(CFLAGS) -I. -o $@
 
 tinywl: tinywl.o Config.o Glue.o Layout.o StackSet.o Tiling.o WXYZMonad.o
@@ -33,3 +32,10 @@ clean:
 	rm -f tinywl tinywl.o xdg-shell-protocol.h
 
 .PHONY: all clean
+
+# --- Additional Dependencies -----------------------------------------------
+
+Glue.hsc : WXYZMonad.o Config.o
+Layout.o : StackSet.o
+tinywl.o : Glue.o # Need to depend on Glue_stub.h actually
+

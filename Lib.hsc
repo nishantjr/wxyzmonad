@@ -1,6 +1,6 @@
 {-# LANGUAGE CApiFFI #-}
 
-module Lib (terminate, next_toplevel, shell) where
+module Lib (WXYZMonad, terminate, next_toplevel, shell) where
 
 #define WLR_USE_UNSTABLE
 

@@ -22,7 +22,7 @@ xdg-shell-protocol.h:
 %.hs: %.hsc
 	hsc2hs -o $@ $< $(CFLAGS)
 
-tinywl.o: tinywl.c xdg-shell-protocol.h Lib.o
+tinywl.o: tinywl.c xdg-shell-protocol.h Lib.o # Need to depend on Lib_stub.h actually
 	ghc -c $< -g -Werror $(CFLAGS) -I. -o $@
 
 tinywl: tinywl.o Lib.o StackSet.o Layout.o

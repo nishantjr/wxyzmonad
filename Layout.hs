@@ -12,7 +12,7 @@ module Layout
     where
 
 import StackSet hiding (modify)
-import Lib (WXYZMonad)
+import WXYZMonad
 
 import Data.Int
 import Data.Word

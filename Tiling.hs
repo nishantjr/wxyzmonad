@@ -26,7 +26,7 @@ module Tiling (
 
   ) where
 
-import Lib
+import WXYZMonad
 import Layout
 
 import qualified StackSet as W

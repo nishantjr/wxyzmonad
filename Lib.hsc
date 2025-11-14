@@ -1,14 +1,15 @@
 {-# LANGUAGE CApiFFI #-}
 
-module Lib (WXYZMonad, terminate, next_toplevel, shell) where
+module Lib (terminate, next_toplevel, shell) where
 
-#define WLR_USE_UNSTABLE
+import WXYZMonad
 
 import Data.Word
 import Foreign.C.Types
 import qualified Data.Map as M
 import qualified System.Process as P
 
+#define WLR_USE_UNSTABLE
 #include <wlr/types/wlr_keyboard.h>
 
 type Modifier = Word32
@@ -29,10 +30,6 @@ xkb_key_tab = #const XKB_KEY_Tab
 
 -- Operations that a user's configuration may perform
 -----------------------------------------------------
-
--- TODO: For now, we are just a wrapper around IO.
--- State variables are store in global by the C side.
-type WXYZMonad = IO
 
 foreign import capi "lib.h wxyz_terminate"
     terminate :: WXYZMonad ()
@@ -65,3 +62,4 @@ keyBindings = M.fromList [ ((wlr_modifier_alt, xkb_key_q),      terminate)
                          , ((wlr_modifier_alt, xkb_key_h),      hello)
                          , ((wlr_modifier_alt, xkb_key_tab),    next_toplevel)
                          ]
+

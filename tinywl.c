@@ -1061,18 +1061,3 @@ void wxyz_next_toplevel() {
 	focus_toplevel(next_toplevel);
 }
 
-
-/* ------------------------------------------------------------------------- */
-
-int main(int argc, char *argv[]) {
-    hs_init(&argc, &argv);
-
-    int ret = wxyz_init();
-    if (ret != 0) return ret;
-    wxyz_run();
-    wxyz_shutdown();
-
-	hs_exit();
-	return 0;
-}
-

@@ -14,6 +14,8 @@ module WXYZMonad
     , xkb_key_t
     , xkb_key_tab
     , wlr_modifier_alt
+
+    , main
     ) where
 
 import           Data.Word
@@ -44,6 +46,13 @@ xkb_key_tab = #const XKB_KEY_Tab
 -- State variables are store in global by the C side.
 type WXYZMonad = IO
 
+foreign import capi "tinywl.h wxyz_init"
+    wxyz_init :: WXYZMonad CInt
+foreign import capi "tinywl.h wxyz_run"
+    wxyz_run :: WXYZMonad ()
+foreign import capi "tinywl.h wxyz_shutdown"
+    wxyz_shutdown :: WXYZMonad ()
+
 
 -- Operations that a user's configuration may perform
 -----------------------------------------------------
@@ -60,3 +69,11 @@ shell cmd = do _ <- P.createProcess $ P.shell cmd
 hello :: WXYZMonad ()
 hello = putStr "====================\nHello!\n============================\n"
 
+-- Main
+-------
+
+main :: IO ()
+main = do  ret <- wxyz_init
+           if (ret /= 0)
+               then pure ()
+               else wxyz_run >> wxyz_shutdown

@@ -17,7 +17,7 @@ xdg-shell-protocol.h:
 		$(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
 %.o: %.hs
-	ghc -c -O $< -DWLR_USE_UNSTABLE -o $@
+	ghc  -main-is WXYZMonad.main  -c -O $< -DWLR_USE_UNSTABLE -o $@
 
 %.hs: %.hsc
 	hsc2hs -o $@ $< $(CFLAGS)
@@ -26,7 +26,7 @@ tinywl.o: tinywl.c xdg-shell-protocol.h
 	ghc -c $< -g -Werror $(CFLAGS) -I. -o $@
 
 tinywl: tinywl.o Config.o Glue.o Layout.o StackSet.o Tiling.o WXYZMonad.o
-	ghc --make -no-hs-main $^ $> -g -Werror $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ -package containers -package process
+	ghc --make $^ $> -g -Werror $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ -package containers -package process
 
 clean:
 	rm -f tinywl tinywl.o xdg-shell-protocol.h

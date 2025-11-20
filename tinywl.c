@@ -849,8 +849,10 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 /* ------------------------------------------------------------------------- */
 // HACK: For now, instead of associating a pointer to tinywl_server with
 // the WXYZMonad, we use a global veriable.
-struct tinywl_server global_server = {0};;
-
+static struct tinywl_server global_server = {0};;
+// This variable performs the same function as the private wl_display->run.
+// Since we have inlined wl_display_run, we cannot use that variable.
+static bool is_running = false;
 
 int wxyz_init() {
 	wlr_log_init(WLR_DEBUG, NULL);
@@ -1009,12 +1011,17 @@ int wxyz_init() {
 
 }
 
-void wxyz_run() {
-	/* Run the Wayland event loop. This does not return until you exit the
-	 * compositor. Starting the backend rigged up all of the necessary event
-	 * loop configuration to listen to libinput events, DRM events, generate
-	 * frame events at the refresh rate, and so on. */
-	wl_display_run(global_server.wl_display);
+void wxyz_run()
+{
+    struct wl_display* display = global_server.wl_display;
+	is_running = true;
+
+	while (is_running) {
+		wl_display_flush_clients(display);
+		if (wl_event_loop_dispatch(wl_display_get_event_loop(display), -1) < 0) {
+			break;
+		}
+	}
 }
 
 void wxyz_shutdown() {
@@ -1050,6 +1057,7 @@ void wxyz_shutdown() {
 /* ------------------------------------------------------------------------- */
 
 void wxyz_terminate() {
+    is_running = false;
     wl_display_terminate(global_server.wl_display);
 }
 

@@ -851,6 +851,7 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 // the WXYZMonad, we use global veriables.
 
 struct tinywl_server* global_server = NULL;
+
 void wxyz_terminate() {
     wl_display_terminate(global_server->wl_display);
 }
@@ -868,23 +869,6 @@ void wxyz_next_toplevel() {
 int main(int argc, char *argv[]) {
     hs_init(&argc, &argv);
 	wlr_log_init(WLR_DEBUG, NULL);
-	char *startup_cmd = NULL;
-
-	int c;
-	while ((c = getopt(argc, argv, "s:h")) != -1) {
-		switch (c) {
-		case 's':
-			startup_cmd = optarg;
-			break;
-		default:
-			printf("Usage: %s [-s startup command]\n", argv[0]);
-			return 0;
-		}
-	}
-	if (optind < argc) {
-		printf("Usage: %s [-s startup command]\n", argv[0]);
-		return 0;
-	}
 
 	struct tinywl_server server = {0};
 	global_server = &server;
@@ -1034,14 +1018,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	/* Set the WAYLAND_DISPLAY environment variable to our socket and run the
-	 * startup command if requested. */
+	/* Set the WAYLAND_DISPLAY environment variable to our socket. */
 	setenv("WAYLAND_DISPLAY", socket, true);
-	if (startup_cmd) {
-		if (fork() == 0) {
-			execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL);
-		}
-	}
 	/* Run the Wayland event loop. This does not return until you exit the
 	 * compositor. Starting the backend rigged up all of the necessary event
 	 * loop configuration to listen to libinput events, DRM events, generate

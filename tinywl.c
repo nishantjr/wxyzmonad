@@ -120,7 +120,7 @@ static struct tinywl_server global_server = {0};;
 static bool global_is_running = false;
 
 static bool global_have_event = false;
-static struct tinywl_keyboard_key_event global_event = {0};
+static struct tinywl_event global_event = {0};
 /* ------------------------------------------------------------------------- */
 
 
@@ -199,10 +199,13 @@ static void keyboard_handle_key(
     /* Get a list of keysyms based on the keymap for this keyboard */
     xkb_keysym_t sym = xkb_state_key_get_one_sym(
             keyboard->wlr_keyboard->xkb_state, keycode);
-    global_event.event = *event;
-    global_event.keysym = sym;
-    global_event.seat = seat;
-    global_event.modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+
+    assert(global_have_event == false);
+    global_event.type = KEYBOARD_KEY;
+    global_event.keyboard_key.event = *event;
+    global_event.keyboard_key.keysym = sym;
+    global_event.keyboard_key.seat = seat;
+    global_event.keyboard_key.modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
     global_have_event = true;
 }
 
@@ -679,6 +682,13 @@ static void xdg_toplevel_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&toplevel->request_fullscreen.link);
 
     free(toplevel);
+
+    // WARNING: We better not be using the pointer for anything other than
+    // value comparison
+    assert(global_have_event == false);
+    global_event.type = XDG_TOPLEVEL_DESTROY;
+    global_event.xdg_toplevel_new.toplevel = toplevel;
+    global_have_event = true;
 }
 
 static void begin_interactive(struct tinywl_toplevel *toplevel,
@@ -795,6 +805,11 @@ static void server_new_xdg_toplevel(struct wl_listener *listener, void *data) {
     wl_signal_add(&xdg_toplevel->events.request_maximize, &toplevel->request_maximize);
     toplevel->request_fullscreen.notify = xdg_toplevel_request_fullscreen;
     wl_signal_add(&xdg_toplevel->events.request_fullscreen, &toplevel->request_fullscreen);
+
+    assert(global_have_event == false);
+    global_event.type = XDG_TOPLEVEL_NEW;
+    global_event.xdg_toplevel_new.toplevel = toplevel;
+    global_have_event = true;
 }
 
 static void xdg_popup_commit(struct wl_listener *listener, void *data) {
@@ -1005,7 +1020,7 @@ int wxyz_init() {
     global_is_running = true;
 }
 
-struct tinywl_keyboard_key_event* wxyz_next_event()
+struct tinywl_event* wxyz_next_event()
 {
     struct wl_display* display = global_server.wl_display;
     while (global_is_running) {

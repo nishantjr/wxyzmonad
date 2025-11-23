@@ -28,6 +28,7 @@ type WLKeyboardKeyState = Word32
 state_Pressed :: WLKeyboardKeyState
 state_Pressed = #const WL_KEYBOARD_KEY_STATE_PRESSED
 
+type XdgTopLevel = Ptr ()
 data Event = KeyPressEvent {
                 time_msec :: Word32,
                 keycode  :: KeyCode, -- libinput  keycode
@@ -38,19 +39,35 @@ data Event = KeyPressEvent {
                                -- it will be available after the current event is handled.
                                -- Needed to pass to wlr_seat_keyboard_notify_key
              }
+           | XdgTopLevelNewEvent { toplevel :: XdgTopLevel }
+           | XdgTopLevelDestroyEvent  { toplevel :: XdgTopLevel }
+
+
   deriving Show
 
 next_event :: WXYZMonad (Maybe Event)
-next_event = do ptr <- _wxyz_next_event
-                if (ptr == nullPtr)
-                then pure Nothing
-                else do time_msec <- (#{peek struct tinywl_keyboard_key_event, event.keycode} ptr)
-                        keycode <- (#{peek struct tinywl_keyboard_key_event, event.keycode} ptr)
-                        state <- (#{peek struct tinywl_keyboard_key_event, event.state} ptr)
-                        keysym <- (#{peek struct tinywl_keyboard_key_event, keysym} ptr)
-                        modifiers <- (#{peek struct tinywl_keyboard_key_event, modifiers} ptr)
-                        seat <- (#{peek struct tinywl_keyboard_key_event, seat} ptr)
-                        pure $ Just (KeyPressEvent time_msec keycode state keysym modifiers seat)
+next_event =
+  do ptr <- _wxyz_next_event
+     if (ptr == nullPtr)
+     then pure Nothing
+     else do ty <- #{peek struct tinywl_event, type} ptr
+             unparse ty ptr
+  where
+    unparse :: Word8 -> Ptr Event -> WXYZMonad (Maybe Event)
+    unparse #{const KEYBOARD_KEY} ptr
+        = do time_msec  <- (#{peek struct tinywl_event, keyboard_key.event.keycode} ptr)
+             keycode    <- (#{peek struct tinywl_event, keyboard_key.event.keycode} ptr)
+             state      <- (#{peek struct tinywl_event, keyboard_key.event.state}   ptr)
+             keysym     <- (#{peek struct tinywl_event, keyboard_key.keysym}        ptr)
+             modifiers  <- (#{peek struct tinywl_event, keyboard_key.modifiers}     ptr)
+             seat       <- (#{peek struct tinywl_event, keyboard_key.seat}          ptr)
+             pure $ Just (KeyPressEvent time_msec keycode state keysym modifiers seat)
+    unparse #{const XDG_TOPLEVEL_NEW} ptr
+        = do toplevel <- (#{peek struct tinywl_event, xdg_toplevel_new.toplevel} ptr)
+             pure $ Just (XdgTopLevelNewEvent toplevel)
+    unparse #{const XDG_TOPLEVEL_DESTROY} ptr
+        = do toplevel <- (#{peek struct tinywl_event, xdg_toplevel_new.toplevel} ptr)
+             pure $ Just (XdgTopLevelDestroyEvent toplevel)
 
 foreign import capi "tinywl.h wxyz_shutdown"
     wxyz_shutdown :: WXYZMonad ()
@@ -79,6 +96,7 @@ handle_event (KeyPressEvent time_msec keycode state keysym modifiers seat)
         of Just action | state == state_Pressed
                 -> action
            _    -> _wlr_seat_keyboard_notify_key seat time_msec keycode state
+handle_event e = putStrLn $ show e
 
 main_loop :: IO ()
 main_loop = do e <- next_event

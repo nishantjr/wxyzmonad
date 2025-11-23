@@ -7,9 +7,7 @@
 #include <unistd.h>
 #include <wayland-server-core.h>
 
-#include "Glue_stub.h"
-
-#define WLR_USE_UNSTABLE
+#include "tinywl.h"
 
 #include <wlr/backend.h>
 #include <wlr/render/allocator.h>
@@ -18,7 +16,6 @@
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_input_device.h>
-#include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_pointer.h>
@@ -114,6 +111,19 @@ struct tinywl_keyboard {
 	struct wl_listener destroy;
 };
 
+/* ------------------------------------------------------------------------- */
+// HACK: For now, instead of associating a pointer to tinywl_server with
+// the WXYZMonad, we use a global veriable.
+static struct tinywl_server global_server = {0};;
+// This variable performs the same function as the private wl_display->run.
+// Since we have inlined wl_display_run, we cannot use that variable.
+static bool global_is_running = false;
+
+static bool global_have_event = false;
+static struct tinywl_keyboard_key_event global_event = {0};
+/* ------------------------------------------------------------------------- */
+
+
 static void focus_toplevel(struct tinywl_toplevel *toplevel) {
 	/* Note: this function only deals with keyboard focus. */
 	if (toplevel == NULL) {
@@ -187,24 +197,13 @@ static void keyboard_handle_key(
 	/* Translate libinput keycode -> xkbcommon */
 	uint32_t keycode = event->keycode + 8;
 	/* Get a list of keysyms based on the keymap for this keyboard */
-	const xkb_keysym_t *syms;
-	int nsyms = xkb_state_key_get_syms(
-			keyboard->wlr_keyboard->xkb_state, keycode, &syms);
-
-	bool handled = false;
-	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
-	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-		for (int i = 0; i < nsyms; i++) {
-			handled = handle_keysym(modifiers, syms[i]);
-		}
-	}
-
-	if (!handled) {
-		/* Otherwise, we pass it along to the client. */
-		wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
-		wlr_seat_keyboard_notify_key(seat, event->time_msec,
-			event->keycode, event->state);
-	}
+	xkb_keysym_t sym = xkb_state_key_get_one_sym(
+			keyboard->wlr_keyboard->xkb_state, keycode);
+    global_event.event = *event;
+    global_event.keysym = sym;
+    global_event.seat = seat;
+    global_event.modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+    global_have_event = true;
 }
 
 static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
@@ -259,7 +258,7 @@ static void server_new_pointer(struct tinywl_server *server,
 	/* We don't do anything special with pointers. All of our pointer handling
 	 * is proxied through wlr_cursor. On another compositor, you might take this
 	 * opportunity to do libinput configuration on the device to set
-	 * acceleration, etc. */
+	ga * acceleration, etc. */
 	wlr_cursor_attach_input_device(server->cursor, device);
 }
 
@@ -847,12 +846,6 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 }
 
 /* ------------------------------------------------------------------------- */
-// HACK: For now, instead of associating a pointer to tinywl_server with
-// the WXYZMonad, we use a global veriable.
-static struct tinywl_server global_server = {0};;
-// This variable performs the same function as the private wl_display->run.
-// Since we have inlined wl_display_run, we cannot use that variable.
-static bool is_running = false;
 
 int wxyz_init() {
 	wlr_log_init(WLR_DEBUG, NULL);
@@ -1009,19 +1002,23 @@ int wxyz_init() {
 	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s",
 			socket);
 
+	global_is_running = true;
 }
 
-void wxyz_run()
+struct tinywl_keyboard_key_event* wxyz_next_event()
 {
     struct wl_display* display = global_server.wl_display;
-	is_running = true;
-
-	while (is_running) {
+	while (global_is_running) {
 		wl_display_flush_clients(display);
-		if (wl_event_loop_dispatch(wl_display_get_event_loop(display), -1) < 0) {
-			break;
+		if (wl_event_loop_dispatch(wl_display_get_event_loop(display), -1) < 0)
+    		return NULL;
+
+		if (global_have_event) {
+    		global_have_event = false;
+    		return &global_event;
 		}
 	}
+	return NULL;
 }
 
 void wxyz_shutdown() {
@@ -1057,7 +1054,7 @@ void wxyz_shutdown() {
 /* ------------------------------------------------------------------------- */
 
 void wxyz_terminate() {
-    is_running = false;
+    global_is_running = false;
     wl_display_terminate(global_server.wl_display);
 }
 

@@ -2,6 +2,7 @@
 
 module WXYZMonad
     ( KeySym(..)
+    , KeyCode(..)
     , Modifier(..)
     , WXYZMonad(..)
     , hello
@@ -14,22 +15,25 @@ module WXYZMonad
     , xkb_key_t
     , xkb_key_tab
     , wlr_modifier_alt
-
-    , main
     ) where
 
+import           Control.Monad
 import           Data.Word
 import           Foreign.C.Types
+import           Foreign.C.String
+import           Foreign.Ptr
+
 import qualified System.Process as P
 
-#define WLR_USE_UNSTABLE
-#include <wlr/types/wlr_keyboard.h>
+#include "tinywl.h"
 
 type Modifier = Word32
 wlr_modifier_alt :: Modifier
 wlr_modifier_alt = #const WLR_MODIFIER_ALT
 
+type KeyCode = Word32
 type KeySym = Word32
+
 xkb_key_d :: Modifier
 xkb_key_d = #const XKB_KEY_d
 xkb_key_h :: Modifier
@@ -46,14 +50,6 @@ xkb_key_tab = #const XKB_KEY_Tab
 -- State variables are store in global by the C side.
 type WXYZMonad = IO
 
-foreign import capi "tinywl.h wxyz_init"
-    wxyz_init :: WXYZMonad CInt
-foreign import capi "tinywl.h wxyz_run"
-    wxyz_run :: WXYZMonad ()
-foreign import capi "tinywl.h wxyz_shutdown"
-    wxyz_shutdown :: WXYZMonad ()
-
-
 -- Operations that a user's configuration may perform
 -----------------------------------------------------
 
@@ -69,11 +65,3 @@ shell cmd = do _ <- P.createProcess $ P.shell cmd
 hello :: WXYZMonad ()
 hello = putStr "====================\nHello!\n============================\n"
 
--- Main
--------
-
-main :: IO ()
-main = do  ret <- wxyz_init
-           if (ret /= 0)
-               then pure ()
-               else wxyz_run >> wxyz_shutdown

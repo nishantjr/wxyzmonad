@@ -17,7 +17,7 @@ xdg-shell-protocol.h:
 		$(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
 %.o: %.hs
-	ghc  -main-is WXYZMonad.main  -c -O $< -DWLR_USE_UNSTABLE -o $@
+	ghc -main-is Main.main -c -O $< -DWLR_USE_UNSTABLE  $(CFLAGS) -o $@
 
 %.hs: %.hsc
 	hsc2hs -o $@ $< $(CFLAGS)
@@ -25,7 +25,7 @@ xdg-shell-protocol.h:
 tinywl.o: tinywl.c xdg-shell-protocol.h
 	ghc -c $< -g -Werror $(CFLAGS) -I. -o $@
 
-tinywl: tinywl.o Config.o Glue.o Layout.o StackSet.o Tiling.o WXYZMonad.o
+tinywl: tinywl.o Config.o Main.o Layout.o Main.o StackSet.o Tiling.o WXYZMonad.o
 	ghc --make $^ $> -g -Werror $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ -package containers -package process
 
 clean:
@@ -35,7 +35,7 @@ clean:
 
 # --- Additional Dependencies -----------------------------------------------
 
-Glue.hsc : WXYZMonad.o Config.o
+Config.o : WXYZMonad.o
+Main.hsc : WXYZMonad.o Config.o
 Layout.o : StackSet.o
-tinywl.o : Glue.o # Need to depend on Glue_stub.h actually
 

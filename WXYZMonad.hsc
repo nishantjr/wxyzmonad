@@ -25,7 +25,7 @@ import           Foreign.Ptr
 
 import qualified System.Process as P
 
-#include "tinywl.h"
+#include "clib.h"
 
 type Modifier = Word32
 wlr_modifier_alt :: Modifier
@@ -53,9 +53,9 @@ type WXYZMonad = IO
 -- Operations that a user's configuration may perform
 -----------------------------------------------------
 
-foreign import capi "tinywl.h wxyz_terminate"
+foreign import capi "clib.h wxyz_terminate"
     terminate :: WXYZMonad ()
-foreign import capi "tinywl.h wxyz_next_toplevel"
+foreign import capi "clib.h wxyz_next_toplevel"
     next_toplevel :: WXYZMonad ()
 
 shell :: String -> WXYZMonad ()

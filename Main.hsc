@@ -13,14 +13,14 @@ import           Foreign.C.Types
 
 
 
-#include "tinywl.h"
+#include "clib.h"
 
 
 
-foreign import capi "tinywl.h wxyz_init"
+foreign import capi "clib.h wxyz_init"
     wxyz_init :: WXYZMonad CInt
 
-foreign import capi "tinywl.h wxyz_next_event" _wxyz_next_event :: WXYZMonad (Ptr Event)
+foreign import capi "clib.h wxyz_next_event" _wxyz_next_event :: WXYZMonad (Ptr Event)
 
 ----------------------------------------------------
 
@@ -50,26 +50,26 @@ next_event =
   do ptr <- _wxyz_next_event
      if (ptr == nullPtr)
      then pure Nothing
-     else do ty <- #{peek struct tinywl_event, type} ptr
+     else do ty <- #{peek struct wxyz_event, type} ptr
              unparse ty ptr
   where
     unparse :: Word8 -> Ptr Event -> WXYZMonad (Maybe Event)
     unparse #{const KEYBOARD_KEY} ptr
-        = do time_msec  <- (#{peek struct tinywl_event, keyboard_key.event.keycode} ptr)
-             keycode    <- (#{peek struct tinywl_event, keyboard_key.event.keycode} ptr)
-             state      <- (#{peek struct tinywl_event, keyboard_key.event.state}   ptr)
-             keysym     <- (#{peek struct tinywl_event, keyboard_key.keysym}        ptr)
-             modifiers  <- (#{peek struct tinywl_event, keyboard_key.modifiers}     ptr)
-             seat       <- (#{peek struct tinywl_event, keyboard_key.seat}          ptr)
+        = do time_msec  <- (#{peek struct wxyz_event, keyboard_key.event.keycode} ptr)
+             keycode    <- (#{peek struct wxyz_event, keyboard_key.event.keycode} ptr)
+             state      <- (#{peek struct wxyz_event, keyboard_key.event.state}   ptr)
+             keysym     <- (#{peek struct wxyz_event, keyboard_key.keysym}        ptr)
+             modifiers  <- (#{peek struct wxyz_event, keyboard_key.modifiers}     ptr)
+             seat       <- (#{peek struct wxyz_event, keyboard_key.seat}          ptr)
              pure $ Just (KeyPressEvent time_msec keycode state keysym modifiers seat)
     unparse #{const XDG_TOPLEVEL_NEW} ptr
-        = do toplevel <- (#{peek struct tinywl_event, xdg_toplevel_new.toplevel} ptr)
+        = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_new.toplevel} ptr)
              pure $ Just (XdgTopLevelNewEvent toplevel)
     unparse #{const XDG_TOPLEVEL_DESTROY} ptr
-        = do toplevel <- (#{peek struct tinywl_event, xdg_toplevel_new.toplevel} ptr)
+        = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_new.toplevel} ptr)
              pure $ Just (XdgTopLevelDestroyEvent toplevel)
 
-foreign import capi "tinywl.h wxyz_shutdown"
+foreign import capi "clib.h wxyz_shutdown"
     wxyz_shutdown :: WXYZMonad ()
 foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
                                 -- seat

@@ -4,7 +4,9 @@ module WXYZMonad
     ( KeySym(..)
     , KeyCode(..)
     , Modifier(..)
+    , WXYZConf(..)
     , WXYZMonad(..)
+    , WXYZState(..)
     , hello
     , next_toplevel
     , shell
@@ -18,6 +20,10 @@ module WXYZMonad
     ) where
 
 import           Control.Monad
+import           Control.Monad.IO.Class
+import           Control.Monad.Reader
+import           Control.Monad.State
+import           Control.Monad.State.Class
 import           Data.Word
 import           Foreign.C.Types
 import           Foreign.C.String
@@ -46,22 +52,29 @@ xkb_key_tab :: Modifier
 xkb_key_tab = #const XKB_KEY_Tab
 
 -----------------------------------------------------
--- TODO: For now, we are just a wrapper around IO.
--- State variables are store in global by the C side.
-type WXYZMonad = IO
+data WXYZState = State
+data WXYZConf = Config
+
+newtype WXYZMonad a = WXYZMonad (ReaderT WXYZConf (StateT WXYZState IO) a)
+    deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState WXYZState)
 
 -- Operations that a user's configuration may perform
 -----------------------------------------------------
 
 foreign import capi "clib.h wxyz_terminate"
-    terminate :: WXYZMonad ()
+    _terminate :: IO ()
+terminate :: WXYZMonad ()
+terminate = liftIO _terminate
+
 foreign import capi "clib.h wxyz_next_toplevel"
-    next_toplevel :: WXYZMonad ()
+    _next_toplevel :: IO ()
+next_toplevel :: WXYZMonad ()
+next_toplevel = liftIO _next_toplevel
 
 shell :: String -> WXYZMonad ()
-shell cmd = do _ <- P.createProcess $ P.shell cmd
-               pure ()
+shell cmd = liftIO $ do _ <- P.createProcess $ P.shell cmd
+                        pure ()
 
 hello :: WXYZMonad ()
-hello = putStr "====================\nHello!\n============================\n"
+hello = liftIO $ putStr "====================\nHello!\n============================\n"
 

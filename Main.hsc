@@ -5,6 +5,9 @@ module Main (main) where
 import           Config (keyBindings)
 import           WXYZMonad
 
+import           Control.Monad.IO.Class
+import           Control.Monad.State
+import           Control.Monad.Reader
 import           Data.Word
 import qualified Data.Map as M
 import           Foreign.Storable
@@ -18,9 +21,10 @@ import           Foreign.C.Types
 
 
 foreign import capi "clib.h wxyz_init"
-    wxyz_init :: WXYZMonad CInt
+    wxyz_init :: IO CInt
 
-foreign import capi "clib.h wxyz_next_event" _wxyz_next_event :: WXYZMonad (Ptr Event)
+foreign import capi "clib.h wxyz_next_event"
+    _wxyz_next_event :: IO (Ptr Event)
 
 ----------------------------------------------------
 
@@ -45,7 +49,7 @@ data Event = KeyPressEvent {
 
   deriving Show
 
-next_event :: WXYZMonad (Maybe Event)
+next_event :: IO (Maybe Event)
 next_event =
   do ptr <- _wxyz_next_event
      if (ptr == nullPtr)
@@ -53,7 +57,7 @@ next_event =
      else do ty <- #{peek struct wxyz_event, type} ptr
              unparse ty ptr
   where
-    unparse :: Word8 -> Ptr Event -> WXYZMonad (Maybe Event)
+    unparse :: Word8 -> Ptr Event -> IO (Maybe Event)
     unparse #{const KEYBOARD_KEY} ptr
         = do time_msec  <- (#{peek struct wxyz_event, keyboard_key.event.keycode} ptr)
              keycode    <- (#{peek struct wxyz_event, keyboard_key.event.keycode} ptr)
@@ -70,7 +74,7 @@ next_event =
              pure $ Just (XdgTopLevelDestroyEvent toplevel)
 
 foreign import capi "clib.h wxyz_shutdown"
-    wxyz_shutdown :: WXYZMonad ()
+    wxyz_shutdown :: IO ()
 foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
                                 -- seat
     _wlr_seat_keyboard_notify_key :: Ptr () -> Word32 -> KeyCode -> WLKeyboardKeyState -> IO ()
@@ -90,23 +94,28 @@ foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
 --  However, due to the IO wrapper, this never returns.
 --  An alternative maybe to define a type class.
 
-handle_event :: Event -> IO ()
+handle_event :: Event -> WXYZMonad ()
 handle_event (KeyPressEvent time_msec keycode state keysym modifiers seat)
     = case M.lookup (modifiers, keysym) keyBindings
         of Just action | state == state_Pressed
                 -> action
-           _    -> _wlr_seat_keyboard_notify_key seat time_msec keycode state
-handle_event e = putStrLn $ show e
+           _    -> liftIO $ _wlr_seat_keyboard_notify_key seat time_msec keycode state
+handle_event e = liftIO $ putStrLn $ show e
 
-main_loop :: IO ()
-main_loop = do e <- next_event
+runWXYZ :: WXYZConf -> WXYZState -> WXYZMonad a -> IO (a, WXYZState)
+runWXYZ c st (WXYZMonad a) = runStateT (runReaderT a c) st
+
+main_loop :: WXYZMonad ()
+main_loop = do e <- liftIO next_event
                case e of
                  Nothing -> pure ()
                  Just e  -> do handle_event e
                                main_loop
 
 main :: IO ()
-main = do  ret <- wxyz_init
+main = do  let state = State
+           let config = Config
+           ret <- wxyz_init
            if (ret /= 0)
               then pure ()
-              else main_loop
+              else runWXYZ config state main_loop >> pure ()

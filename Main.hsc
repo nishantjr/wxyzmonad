@@ -28,8 +28,10 @@ foreign import capi "clib.h wxyz_shutdown"
 foreign import capi "clib.h wxyz_next_event"
     _wxyz_next_event :: IO (Ptr Event)
 
+data Seat
+
 foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
-    _wlr_seat_keyboard_notify_key :: Ptr () -> Word32 -> KeyCode -> WLKeyboardKeyState -> IO ()
+    _wlr_seat_keyboard_notify_key :: Ptr Seat -> Word32 -> KeyCode -> WLKeyboardKeyState -> IO ()
                                   -- Seat*
 
 ----------------------------------------------------
@@ -38,19 +40,20 @@ type WLKeyboardKeyState = Word32
 state_Pressed :: WLKeyboardKeyState
 state_Pressed = #const WL_KEYBOARD_KEY_STATE_PRESSED
 
-type XdgTopLevel = Ptr ()
+
+data XdgTopLevel
 data Event = KeyPressEvent {
                 time_msec :: Word32,
                 keycode  :: KeyCode, -- libinput  keycode
                 state :: Word32,
                 keysym :: KeySym,
                 modifiers :: Word32,
-                seat :: Ptr () -- Don't try storing this. There's no guarantee
-                               -- it will be available after the current event is handled.
-                               -- Needed to pass to wlr_seat_keyboard_notify_key
+                seat :: Ptr Seat -- Don't try storing this. There's no guarantee
+                                 -- it will be available after the current event is handled.
+                                 -- Needed to pass to wlr_seat_keyboard_notify_key
              }
-           | XdgTopLevelNewEvent { toplevel :: XdgTopLevel }
-           | XdgTopLevelDestroyEvent  { toplevel :: XdgTopLevel }
+           | XdgTopLevelNewEvent { toplevel :: Ptr XdgTopLevel }
+           | XdgTopLevelDestroyEvent  { toplevel :: Ptr XdgTopLevel }
 
 
   deriving Show

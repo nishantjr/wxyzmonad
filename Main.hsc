@@ -21,10 +21,16 @@ import           Foreign.C.Types
 
 
 foreign import capi "clib.h wxyz_init"
-    wxyz_init :: IO CInt
+    _wxyz_init :: IO CInt
+foreign import capi "clib.h wxyz_shutdown"
+    _wxyz_shutdown :: IO ()
 
 foreign import capi "clib.h wxyz_next_event"
     _wxyz_next_event :: IO (Ptr Event)
+
+foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
+    _wlr_seat_keyboard_notify_key :: Ptr () -> Word32 -> KeyCode -> WLKeyboardKeyState -> IO ()
+                                  -- Seat*
 
 ----------------------------------------------------
 
@@ -73,13 +79,6 @@ next_event =
         = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_new.toplevel} ptr)
              pure $ Just (XdgTopLevelDestroyEvent toplevel)
 
-foreign import capi "clib.h wxyz_shutdown"
-    wxyz_shutdown :: IO ()
-foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
-                                -- seat
-    _wlr_seat_keyboard_notify_key :: Ptr () -> Word32 -> KeyCode -> WLKeyboardKeyState -> IO ()
-
-
 -- TODO: Ideally, to allow unit testing, I would like to have a method
 -- similar to:
 --
@@ -115,7 +114,7 @@ main_loop = do e <- liftIO next_event
 main :: IO ()
 main = do  let state = State
            let config = Config
-           ret <- wxyz_init
+           ret <- _wxyz_init
            if (ret /= 0)
               then pure ()
-              else runWXYZ config state main_loop >> pure ()
+              else runWXYZ config state main_loop >> (liftIO _wxyz_shutdown)

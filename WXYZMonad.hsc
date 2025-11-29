@@ -5,7 +5,7 @@ module WXYZMonad
     , KeyCode(..)
     , Modifier(..)
     , WXYZConf(..)
-    , WXYZMonad(..)
+    , WXYZ(..)
     , WXYZState(..)
     , hello
     , next_toplevel
@@ -55,7 +55,7 @@ xkb_key_tab = #const XKB_KEY_Tab
 data WXYZState = State
 data WXYZConf = Config
 
-newtype WXYZMonad a = WXYZMonad (ReaderT WXYZConf (StateT WXYZState IO) a)
+newtype WXYZ a = WXYZ (ReaderT WXYZConf (StateT WXYZState IO) a)
     deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState WXYZState)
 
 -- Operations that a user's configuration may perform
@@ -63,18 +63,18 @@ newtype WXYZMonad a = WXYZMonad (ReaderT WXYZConf (StateT WXYZState IO) a)
 
 foreign import capi "clib.h wxyz_terminate"
     _terminate :: IO ()
-terminate :: WXYZMonad ()
+terminate :: WXYZ ()
 terminate = liftIO _terminate
 
 foreign import capi "clib.h wxyz_next_toplevel"
     _next_toplevel :: IO ()
-next_toplevel :: WXYZMonad ()
+next_toplevel :: WXYZ ()
 next_toplevel = liftIO _next_toplevel
 
-shell :: String -> WXYZMonad ()
+shell :: String -> WXYZ ()
 shell cmd = liftIO $ do _ <- P.createProcess $ P.shell cmd
                         pure ()
 
-hello :: WXYZMonad ()
+hello :: WXYZ ()
 hello = liftIO $ putStr "====================\nHello!\n============================\n"
 

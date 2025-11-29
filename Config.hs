@@ -7,7 +7,7 @@ import           WXYZMonad
 -----------------------------------------------------
 -- User configuration
 
-keyBindings :: M.Map (Modifier,KeySym) (WXYZMonad ())
+keyBindings :: M.Map (Modifier,KeySym) (WXYZ ())
 keyBindings = M.fromList [ ((wlr_modifier_alt, xkb_key_q),      terminate)
                          , ((wlr_modifier_alt, xkb_key_t),      shell "alacritty")
                          , ((wlr_modifier_alt, xkb_key_h),      hello)

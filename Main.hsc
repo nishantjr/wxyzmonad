@@ -94,7 +94,7 @@ foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
 --  However, due to the IO wrapper, this never returns.
 --  An alternative maybe to define a type class.
 
-handle_event :: Event -> WXYZMonad ()
+handle_event :: Event -> WXYZ ()
 handle_event (KeyPressEvent time_msec keycode state keysym modifiers seat)
     = case M.lookup (modifiers, keysym) keyBindings
         of Just action | state == state_Pressed
@@ -102,10 +102,10 @@ handle_event (KeyPressEvent time_msec keycode state keysym modifiers seat)
            _    -> liftIO $ _wlr_seat_keyboard_notify_key seat time_msec keycode state
 handle_event e = liftIO $ putStrLn $ show e
 
-runWXYZ :: WXYZConf -> WXYZState -> WXYZMonad a -> IO (a, WXYZState)
-runWXYZ c st (WXYZMonad a) = runStateT (runReaderT a c) st
+runWXYZ :: WXYZConf -> WXYZState -> WXYZ a -> IO (a, WXYZState)
+runWXYZ c st (WXYZ a) = runStateT (runReaderT a c) st
 
-main_loop :: WXYZMonad ()
+main_loop :: WXYZ ()
 main_loop = do e <- liftIO next_event
                case e of
                  Nothing -> pure ()

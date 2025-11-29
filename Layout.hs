@@ -84,7 +84,7 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     --   "XMonad.Layout.PerWorkspace").
     runLayout :: Workspace WorkspaceId (layout a) a
               -> Rectangle
-              -> WXYZMonad ([(a, Rectangle)], Maybe (layout a))
+              -> WXYZ ([(a, Rectangle)], Maybe (layout a))
     runLayout (Workspace _ l ms) r = maybe (emptyLayout l r) (doLayout l r) ms
 
     -- | Given a 'Rectangle' in which to place the windows, and a 'Stack'
@@ -98,21 +98,21 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     -- keeps track of some sort of state).  Return @Nothing@ if the
     -- layout does not need to be modified.
     --
-    -- Layouts which do not need access to the 'WXYZMonad' monad ('IO', window
+    -- Layouts which do not need access to the 'WXYZ' monad ('IO', window
     -- manager state, or configuration) and do not keep track of their
     -- own state should implement 'pureLayout' instead of 'doLayout'.
     doLayout    :: layout a -> Rectangle -> Stack a
-                -> WXYZMonad ([(a, Rectangle)], Maybe (layout a))
+                -> WXYZ ([(a, Rectangle)], Maybe (layout a))
     doLayout l r s   = return (pureLayout l r s, Nothing)
 
     -- | This is a pure version of 'doLayout', for cases where we
-    -- don't need access to the 'WXYZMonad' monad to determine how to lay out
+    -- don't need access to the 'WXYZ' monad to determine how to lay out
     -- the windows, and we don't need to modify the layout itself.
     pureLayout  :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
     pureLayout _ r s = [(focus s, r)]
 
     -- | 'emptyLayout' is called when there are no windows.
-    emptyLayout :: layout a -> Rectangle -> WXYZMonad ([(a, Rectangle)], Maybe (layout a))
+    emptyLayout :: layout a -> Rectangle -> WXYZ ([(a, Rectangle)], Maybe (layout a))
     emptyLayout _ _ = return ([], Nothing)
 
     -- | 'handleMessage' performs message handling.  If
@@ -121,11 +121,11 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     -- Otherwise, 'handleMessage' returns an updated layout and the
     -- screen is refreshed.
     --
-    -- Layouts which do not need access to the 'WXYZMonad' monad to decide how
+    -- Layouts which do not need access to the 'WXYZ' monad to decide how
     -- to handle messages should implement 'pureMessage' instead of
     -- 'handleMessage' (this restricts the risk of error, and makes
     -- testing much easier).
-    handleMessage :: layout a -> SomeMessage -> WXYZMonad (Maybe (layout a))
+    handleMessage :: layout a -> SomeMessage -> WXYZ (Maybe (layout a))
     handleMessage l  = return . pureMessage l
 
     -- | Respond to a message by (possibly) changing our layout, but

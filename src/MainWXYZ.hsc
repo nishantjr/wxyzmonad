@@ -67,17 +67,19 @@ next_event =
     unparse #{const KEYBOARD_KEY} ptr
         = do time_msec  <- (#{peek struct wxyz_event, keyboard_key.event.keycode} ptr)
              keycode    <- (#{peek struct wxyz_event, keyboard_key.event.keycode} ptr)
-             state      <- (#{peek struct wxyz_event, keyboard_key.event.state}   ptr)
+             st         <- (#{peek struct wxyz_event, keyboard_key.event.state}   ptr)
              keysym     <- (#{peek struct wxyz_event, keyboard_key.keysym}        ptr)
              modifiers  <- (#{peek struct wxyz_event, keyboard_key.modifiers}     ptr)
              seat       <- (#{peek struct wxyz_event, keyboard_key.seat}          ptr)
-             pure $ Just (KeyPressEvent time_msec keycode state keysym modifiers seat)
+             pure $ Just (KeyPressEvent time_msec keycode st keysym modifiers seat)
     unparse #{const XDG_TOPLEVEL_NEW} ptr
         = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_new.toplevel} ptr)
              pure $ Just (XdgTopLevelNewEvent toplevel)
     unparse #{const XDG_TOPLEVEL_DESTROY} ptr
         = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_new.toplevel} ptr)
              pure $ Just (XdgTopLevelDestroyEvent toplevel)
+    unparse e _
+        = error $ "Unknown event" ++ (show e)
 
 -- TODO: Ideally, to allow unit testing, I would like to have a method
 -- similar to:
@@ -94,12 +96,12 @@ next_event =
 --  An alternative maybe to define a type class.
 
 handle_event :: Event -> WXYZ ()
-handle_event (KeyPressEvent time_msec keycode state keysym modifiers seat)
+handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
     = do config <- ask
          case M.lookup (modifiers, keysym) (keyBindings config)
-           of Just action | state == state_Pressed
+           of Just action | st == state_Pressed
                    -> action
-              _    -> liftIO $ _wlr_seat_keyboard_notify_key seat time_msec keycode state
+              _    -> liftIO $ _wlr_seat_keyboard_notify_key seat time_msec keycode st
 handle_event e = liftIO $ putStrLn $ show e
 
 runWXYZ :: WXYZConf -> WXYZState -> WXYZ a -> IO (a, WXYZState)
@@ -109,13 +111,13 @@ main_loop :: WXYZ ()
 main_loop = do e <- liftIO next_event
                case e of
                  Nothing -> pure ()
-                 Just e  -> do handle_event e
+                 Just e' -> do handle_event e'
                                main_loop
 
 wxyz :: WXYZConf ->  IO ()
 wxyz config =
-    do let state = State
+    do let st = State
        ret <- _wxyz_init
        if (ret /= 0)
           then pure ()
-          else runWXYZ config state main_loop >> (liftIO _wxyz_shutdown)
+          else runWXYZ config st main_loop >> (liftIO _wxyz_shutdown)

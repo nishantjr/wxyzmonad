@@ -1,5 +1,2 @@
-/wxyz
-/*.o
-/*.hi
-/*_stub.h
-/*-protocol.h
+/.build
+/dist-newstyle

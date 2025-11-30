@@ -1,9 +1,9 @@
 {-# LANGUAGE CApiFFI #-}
 
 module WXYZMonad
-    ( KeySym(..)
-    , KeyCode(..)
-    , Modifier(..)
+    ( KeySym
+    , KeyCode
+    , Modifier
     , WXYZConf(..)
     , WXYZ(..)
     , WXYZState(..)
@@ -19,15 +19,11 @@ module WXYZMonad
     , wlr_modifier_alt
     ) where
 
-import           Control.Monad
-import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import           Control.Monad.State
-import           Control.Monad.State.Class
+import           Control.Monad.State.Class ()
+import qualified Data.Map as M
 import           Data.Word
-import           Foreign.C.Types
-import           Foreign.C.String
-import           Foreign.Ptr
 
 import qualified System.Process as P
 
@@ -53,15 +49,13 @@ xkb_key_tab = #const XKB_KEY_Tab
 
 -----------------------------------------------------
 data WXYZState = State
-    { windowset        :: !WindowSet                     -- ^ workspace list
-    , mapped           :: !(S.Set Window)                -- ^ the Set of mapped windows
-    , waitingUnmap     :: !(M.Map Window Int)            -- ^ the number of expected UnmapEvents
-    }
+data WXYZConf = Config {
+    keyBindings :: M.Map (Modifier,KeySym) (WXYZ ())
+}
 
-data WXYZConf = Config
 
 newtype WXYZ a = WXYZ (ReaderT WXYZConf (StateT WXYZState IO) a)
-    deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState WXYZState)
+    deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState WXYZState, MonadReader WXYZConf)
 
 -- Operations that a user's configuration may perform
 -----------------------------------------------------

@@ -1,0 +1,49 @@
+cabal-version:      3.0
+name:               wxyzmonad
+version:            0.1.0.0
+-- synopsis:
+-- description:
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Nishant Rodrigues
+maintainer:         nishantjr@gmail.com
+-- copyright:
+category:           Graphics
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+-- extra-source-files:
+
+common warnings
+    ghc-options: -Wall
+
+library
+    import:           warnings
+    exposed-modules:  WXYZMonad, MainWXYZ
+    c-sources:        src/clib.c
+    include-dirs:     src/, .build/protocols/
+    pkgconfig-depends:
+      , wlroots-0.19
+      , wayland-server
+      , xkbcommon
+    cpp-options: -DWLR_USE_UNSTABLE
+    -- other-modules:
+    -- other-extensions:
+    build-depends:    base ^>=4.18.3.0,
+                      containers,
+                      mtl,
+                      process,
+    hs-source-dirs:   src
+    default-language: GHC2021
+
+executable njrs-wxyz
+    import:           warnings
+    main-is:          Njr.hs
+    -- other-modules:
+    -- other-extensions:
+    build-depends:
+        base ^>=4.18.3.0,
+        containers,
+        wxyzmonad
+
+    hs-source-dirs:   exe
+    default-language: GHC2021

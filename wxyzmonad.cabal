@@ -18,7 +18,8 @@ common warnings
 
 library
     import:           warnings
-    exposed-modules:  WXYZMonad, MainWXYZ
+    exposed-modules:  WXYZMonad, Key, Event, Operations
+    hs-source-dirs:   src/
     c-sources:        src/clib.c
     include-dirs:     src/, .build/protocols/
     pkgconfig-depends:
@@ -32,7 +33,6 @@ library
                       containers,
                       mtl,
                       process,
-    hs-source-dirs:   src
     default-language: GHC2021
 
 executable njrs-wxyz

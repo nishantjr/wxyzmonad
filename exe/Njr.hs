@@ -4,8 +4,9 @@ module Main (main)
     where
 
 import qualified Data.Map as M
-import           MainWXYZ (wxyz)
 import           WXYZMonad
+import           Key
+import           Operations
 
 main :: IO ()
 main = wxyz (Config keyBindings)

@@ -27,7 +27,6 @@ module Tiling (
   ) where
 
 import WXYZMonad
-import Layout
 
 import qualified StackSet as W
 import Control.Arrow ((***), second)

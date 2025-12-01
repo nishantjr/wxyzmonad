@@ -1,8 +1,8 @@
 {-# LANGUAGE CApiFFI #-}
 
 module WXYZMonad
-    ( WXYZConf(..)
-    , WXYZ(..)
+    ( WXYZ(..)
+    , WXYZConf(..)
     , WXYZState(..)
     , wxyz
     ) where
@@ -11,20 +11,27 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Control.Monad.State.Class ()
+import           Data.List
 import qualified Data.Map as M
 import           Data.Word
 import           Foreign.C.Types
 import           Foreign.Ptr
 
-import           Key
 import           Event
+import           Key
 
 #include "clib.h"
+
 
 -- Our window manager monad
 ---------------------------
 
-data WXYZState = State
+type Window = Ptr XdgTopLevel
+
+data WXYZState = State {
+    windows :: ![Window]
+}
+
 data WXYZConf = Config {
     keyBindings :: M.Map (Modifier,KeySym) (WXYZ ())
 }
@@ -48,7 +55,12 @@ handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
            of Just action | st == state_Pressed
                    -> action
               _    -> liftIO $ _wlr_seat_keyboard_notify_key seat time_msec keycode st
-handle_event e = liftIO $ putStrLn $ show e
+handle_event (XdgTopLevelNewEvent win)
+    = do st <- get
+         put $ st{ windows = (windows st) ++ [win] }
+handle_event (XdgTopLevelDestroyEvent win)
+    = do st <- get
+         put $ st{ windows = delete win (windows st) }
 
 main_loop :: WXYZ ()
 main_loop = do e <- liftIO next_event
@@ -62,7 +74,7 @@ foreign import capi "clib.h wxyz_shutdown" _wxyz_shutdown :: IO ()
 
 wxyz :: WXYZConf ->  IO ()
 wxyz config =
-    do let st = State
+    do let st = State []
        ret <- _wxyz_init
        if (ret /= 0)
           then pure ()

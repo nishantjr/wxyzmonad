@@ -33,6 +33,7 @@ library
                       containers,
                       mtl,
                       process,
+                      transformers
     default-language: GHC2021
 
 executable njrs-wxyz

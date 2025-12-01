@@ -16,20 +16,20 @@ struct wxyz_keyboard_key_event {
     struct wlr_seat* seat;
 };
 
-struct wxyz_xdg_toplevel_new_event     { struct wxyz_toplevel* toplevel; };
-struct wxyz_xdg_toplevel_destroy_event { struct wxyz_toplevel* toplevel; };
+struct wxyz_xdg_toplevel_map_event      { struct wxyz_toplevel* toplevel; };
+struct wxyz_xdg_toplevel_unmap_event    { struct wxyz_toplevel* toplevel; };
 
 enum wxyz_event_type {
     KEYBOARD_KEY = 1,
-    XDG_TOPLEVEL_NEW,
-    XDG_TOPLEVEL_DESTROY,
+    XDG_TOPLEVEL_MAP,
+    XDG_TOPLEVEL_UNMAP,
 };
 struct wxyz_event {
     enum wxyz_event_type type;
     union {
-        struct wxyz_keyboard_key_event         keyboard_key;
-        struct wxyz_xdg_toplevel_new_event     xdg_toplevel_new;
-        struct wxyz_xdg_toplevel_destroy_event xdg_toplevel_destroy;
+        struct wxyz_keyboard_key_event          keyboard_key;
+        struct wxyz_xdg_toplevel_map_event      xdg_toplevel_map;
+        struct wxyz_xdg_toplevel_unmap_event    xdg_toplevel_unmap;
     };
 };
 
@@ -40,5 +40,6 @@ void wxyz_run();
 void wxyz_shutdown();
 
 void wxyz_terminate();
+void focus_toplevel(struct wxyz_toplevel *toplevel);
 void wxyz_next_toplevel();
 

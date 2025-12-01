@@ -124,7 +124,7 @@ static struct wxyz_event global_event = {0};
 /* ------------------------------------------------------------------------- */
 
 
-static void focus_toplevel(struct wxyz_toplevel *toplevel) {
+void focus_toplevel(struct wxyz_toplevel *toplevel) {
     /* Note: this function only deals with keyboard focus. */
     if (toplevel == NULL) {
         return;
@@ -641,6 +641,11 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
     wl_list_insert(&toplevel->server->toplevels, &toplevel->link);
 
     focus_toplevel(toplevel);
+
+    assert(global_have_event == false);
+    global_event.type = XDG_TOPLEVEL_MAP;
+    global_event.xdg_toplevel_map.toplevel = toplevel;
+    global_have_event = true;
 }
 
 static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
@@ -653,6 +658,11 @@ static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
     }
 
     wl_list_remove(&toplevel->link);
+
+    assert(global_have_event == false);
+    global_event.type = XDG_TOPLEVEL_UNMAP;
+    global_event.xdg_toplevel_unmap.toplevel = toplevel;
+    global_have_event = true;
 }
 
 static void xdg_toplevel_commit(struct wl_listener *listener, void *data) {
@@ -682,13 +692,6 @@ static void xdg_toplevel_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&toplevel->request_fullscreen.link);
 
     free(toplevel);
-
-    // WARNING: We better not be using the pointer for anything other than
-    // value comparison
-    assert(global_have_event == false);
-    global_event.type = XDG_TOPLEVEL_DESTROY;
-    global_event.xdg_toplevel_new.toplevel = toplevel;
-    global_have_event = true;
 }
 
 static void begin_interactive(struct wxyz_toplevel *toplevel,
@@ -805,11 +808,6 @@ static void server_new_xdg_toplevel(struct wl_listener *listener, void *data) {
     wl_signal_add(&xdg_toplevel->events.request_maximize, &toplevel->request_maximize);
     toplevel->request_fullscreen.notify = xdg_toplevel_request_fullscreen;
     wl_signal_add(&xdg_toplevel->events.request_fullscreen, &toplevel->request_fullscreen);
-
-    assert(global_have_event == false);
-    global_event.type = XDG_TOPLEVEL_NEW;
-    global_event.xdg_toplevel_new.toplevel = toplevel;
-    global_have_event = true;
 }
 
 static void xdg_popup_commit(struct wl_listener *listener, void *data) {

@@ -34,8 +34,8 @@ data Event = KeyPressEvent {
                                  -- it will be available after the current event is handled.
                                  -- Needed to pass to wlr_seat_keyboard_notify_key
              }
-           | XdgTopLevelNewEvent { toplevel :: Ptr XdgTopLevel }
-           | XdgTopLevelDestroyEvent  { toplevel :: Ptr XdgTopLevel }
+           | XdgTopLevelMapEvent { toplevel :: Ptr XdgTopLevel }
+           | XdgTopLevelUnmapEvent  { toplevel :: Ptr XdgTopLevel }
  deriving Show
 
 foreign import capi "clib.h wxyz_next_event"
@@ -57,11 +57,11 @@ next_event =
              modifiers  <- (#{peek struct wxyz_event, keyboard_key.modifiers}     ptr)
              seat       <- (#{peek struct wxyz_event, keyboard_key.seat}          ptr)
              pure $ Just (KeyPressEvent time_msec keycode st keysym modifiers seat)
-    unparse #{const XDG_TOPLEVEL_NEW} ptr
-        = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_new.toplevel} ptr)
-             pure $ Just (XdgTopLevelNewEvent toplevel)
-    unparse #{const XDG_TOPLEVEL_DESTROY} ptr
-        = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_new.toplevel} ptr)
-             pure $ Just (XdgTopLevelDestroyEvent toplevel)
+    unparse #{const XDG_TOPLEVEL_MAP} ptr
+        = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_map.toplevel} ptr)
+             pure $ Just (XdgTopLevelMapEvent toplevel)
+    unparse #{const XDG_TOPLEVEL_UNMAP} ptr
+        = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_unmap.toplevel} ptr)
+             pure $ Just (XdgTopLevelUnmapEvent toplevel)
     unparse e _
         = error $ "Unknown event" ++ (show e)

@@ -55,10 +55,10 @@ handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
            of Just action | st == state_Pressed
                    -> action
               _    -> liftIO $ _wlr_seat_keyboard_notify_key seat time_msec keycode st
-handle_event (XdgTopLevelNewEvent win)
+handle_event (XdgTopLevelMapEvent win)
     = do st <- get
          put $ st{ windows = (windows st) ++ [win] }
-handle_event (XdgTopLevelDestroyEvent win)
+handle_event (XdgTopLevelUnmapEvent win)
     = do st <- get
          put $ st{ windows = delete win (windows st) }
 

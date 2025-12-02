@@ -123,6 +123,13 @@ static bool global_have_event = false;
 static struct wxyz_event global_event = {0};
 /* ------------------------------------------------------------------------- */
 
+void wxyz_toplevel_set_position(struct wxyz_toplevel* toplevel, int x, int y) {
+    wlr_scene_node_set_position(&toplevel->scene_tree->node, x, y);
+}
+
+void wxyz_toplevel_set_size(struct wxyz_toplevel* toplevel, int width, int height) {
+    wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, width, height);
+}
 
 void focus_toplevel(struct wxyz_toplevel *toplevel) {
     /* Note: this function only deals with keyboard focus. */

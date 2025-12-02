@@ -221,6 +221,10 @@ instance Message LayoutMessages
 
 foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
     _wlr_seat_keyboard_notify_key :: Ptr Seat -> Word32 -> KeyCode -> WLKeyboardKeyState -> IO ()
+foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_position"
+    _wxyz_toplevel_set_position :: Ptr XdgTopLevel -> Position -> Position -> IO ()
+foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_size"
+    _wxyz_toplevel_set_size :: Ptr XdgTopLevel -> Dimension -> Dimension -> IO ()
 
 handle_event :: Event -> WXYZ ()
 handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
@@ -229,12 +233,29 @@ handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
            of Just action | st == state_Pressed
                    -> action
               _    -> liftIO $ _wlr_seat_keyboard_notify_key seat time_msec keycode st
+
 handle_event (XdgTopLevelMapEvent win)
     = do st <- get
          put $ st{ windowset = insertUp win (windowset st) }
+         layoutWindows
+
 handle_event (XdgTopLevelUnmapEvent win)
     = do st <- get
          put $ st{ windowset = StackSet.delete win (windowset st) }
+         layoutWindows
+
+layoutWindows :: WXYZ ()
+layoutWindows
+    = do st <- get
+         (win_rect, _layout) <- runLayout (ws st) (wsRect st)
+         -- TODO: Update layout so layout's state is handled.
+         -- How do we do this when we are only Reader over Config?
+         mapM_ (\(w,r) -> setGeometry w r) win_rect
+  where
+    ws st     = workspace $ current $ windowset st
+    wsRect st = screenRect $ screenDetail $ current $ windowset st
+    setGeometry w r = liftIO $ do _wxyz_toplevel_set_position w (rect_x r) (rect_y r)
+                                  _wxyz_toplevel_set_size w (rect_width r) (rect_height r)
 
 main_loop :: WXYZ ()
 main_loop = do e <- liftIO next_event

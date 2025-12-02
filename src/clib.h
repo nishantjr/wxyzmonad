@@ -42,4 +42,5 @@ void wxyz_shutdown();
 void wxyz_terminate();
 void focus_toplevel(struct wxyz_toplevel *toplevel);
 void wxyz_next_toplevel();
-
+void wxyz_toplevel_set_position(struct wxyz_toplevel*, int x, int y);
+void wxyz_toplevel_set_size(struct wxyz_toplevel*, int width, int height);

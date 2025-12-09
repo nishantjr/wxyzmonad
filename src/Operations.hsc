@@ -9,6 +9,7 @@ module Operations
     , terminate
     , setTopFocus
     , windows
+    , sendMessage
     ) where
 
 import           Control.Monad
@@ -17,6 +18,8 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Data.List (nub, (\\))
+import           Data.Maybe
+import           Data.Monoid (Endo(..),Any(..))
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified System.Process as P
@@ -96,6 +99,27 @@ windows f = do
 
     setTopFocus
 
+-- | Modify the @WindowSet@ in state with no special handling.
+modifyWindowSet :: (WindowSet -> WindowSet) -> WXYZ ()
+modifyWindowSet f = modify $ \xst -> xst { windowset = f (windowset xst) }
+
+-- | Perform an @WXYZ@ action and check its return value against a predicate p.
+-- If p holds, unwind changes to the @WindowSet@ and replay them using @windows@.
+windowBracket :: (a -> Bool) -> WXYZ a -> WXYZ a
+windowBracket p action = withWindowSet $ \old -> do
+  a <- action
+  when (p a) . withWindowSet $ \new -> do
+    modifyWindowSet $ const old
+    windows         $ const new
+  return a
+
+-- | Perform an @WXYZ@ action. If it returns @Any True@, unwind the
+-- changes to the @WindowSet@ and replay them using @windows@. This is
+-- a version of @windowBracket@ that discards the return value and
+-- handles an @WXYZ@ action that reports its need for refresh via @Any@.
+windowBracket_ :: WXYZ Any -> WXYZ ()
+windowBracket_ = void . windowBracket getAny
+
 
 -- | Move and resize @w@ such that it fits inside the given rectangle,
 -- including its border.
@@ -143,8 +167,21 @@ focusTopLevel w = liftIO $ _focus_toplevel w
 ------------------------------------------------------------------------
 -- Message handling
 
+-- | Throw a message to the current 'LayoutClass' possibly modifying how we
+-- layout the windows, in which case changes are handled through a refresh.
+sendMessage :: Message a => a -> WXYZ ()
+sendMessage a = windowBracket_ $ do
+    w <- gets $ W.workspace . W.current . windowset
+    ml' <- handleMessage (W.layout w) (SomeMessage a) `catchWXYZ` return Nothing
+    whenJust ml' $ \l' ->
+        modifyWindowSet $ \ws -> ws { W.current = (W.current ws)
+                                     { W.workspace = (W.workspace $ W.current ws)
+                                       { W.layout = l' }}}
+    return (Any $ isJust ml')
+
 -- | Update the layout field of a workspace.
 updateLayout :: WorkspaceId -> Maybe (Layout Window) -> WXYZ ()
 updateLayout i ml = whenJust ml $ \l ->
     runOnWorkspaces $ \ww -> return $ if W.tag ww == i then ww { W.layout = l} else ww
+
 

@@ -309,7 +309,6 @@ wxyz config =
 withWindowSet :: (WindowSet -> WXYZ a) -> WXYZ a
 withWindowSet f = gets windowset >>= f
 
-
 -- ---------------------------------------------------------------------
 -- General utilities
 
@@ -326,3 +325,4 @@ runOnWorkspaces job = do
     c:v <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
              $ current ws : visible ws
     modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
+

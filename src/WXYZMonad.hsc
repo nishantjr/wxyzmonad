@@ -4,18 +4,28 @@ module WXYZMonad
     ( WXYZ(..)
     , WXYZConf(..)
     , WXYZState(..)
+    , Dimension
     , Layout(..)
     , LayoutClass(..)
     , Message
+    , Position
     , Rectangle(..)
     , Window
+    , WindowSet
     , LayoutMessages(..)
+    , ScreenDetail(..)
     , SomeMessage(..)
+    , WorkspaceId
+    , catchWXYZ
+    , io
     , fromMessage
-
+    , runOnWorkspaces
+    , withWindowSet
     , wxyz
     ) where
 
+import           Control.Exception (fromException, throw)
+import qualified Control.Exception as E
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import           Control.Monad.State
@@ -26,10 +36,12 @@ import           Data.Typeable
 import           Data.Word
 import           Foreign.C.Types
 import           Foreign.Ptr
+import           System.Exit (ExitCode)
+import           System.IO (hPrint, stderr)
 
 import           Event
 import           Key
-import           StackSet
+import           StackSet hiding (modify)
 
 #include "clib.h"
 
@@ -49,6 +61,7 @@ data Rectangle = Rectangle {
 
 type Window     = Ptr XdgTopLevel
 type WindowSet  = StackSet WorkspaceId (Layout Window) Window ScreenId ScreenDetail
+type WindowSpace = Workspace WorkspaceId (Layout Window) Window
 
 -- | Virtual workspace indices
 type WorkspaceId = String
@@ -72,7 +85,6 @@ data WXYZConf = Config {
     keyBindings :: M.Map (Modifier,KeySym) (WXYZ ()),
     layoutHook :: Layout Window,
     workspaces :: ![String] -- ^ The list of workspaces' names
-
 }
 
 newtype WXYZ a = WXYZ (ReaderT WXYZConf (StateT WXYZState IO) a)
@@ -81,6 +93,17 @@ newtype WXYZ a = WXYZ (ReaderT WXYZConf (StateT WXYZState IO) a)
 runWXYZ :: WXYZConf -> WXYZState -> WXYZ a -> IO (a, WXYZState)
 runWXYZ c st (WXYZ a) = runStateT (runReaderT a c) st
 
+-- | Run in the 'WXYZ' monad, and in case of exception, and catch it and log it
+-- to stderr, and run the error case.
+catchWXYZ :: WXYZ a -> WXYZ a -> WXYZ a
+catchWXYZ job errcase = do
+    st <- get
+    c <- ask
+    (a, s') <- io $ runWXYZ c st job `E.catch` \e -> case fromException e of
+                        Just (_ :: ExitCode) -> throw e
+                        _ -> do hPrint stderr e; runWXYZ c st errcase
+    put s'
+    return a
 
 ------------------------------------------------------------------------
 -- LayoutClass handling. See particular instances in Operations.hs
@@ -278,3 +301,28 @@ wxyz config =
        if (ret /= 0)
           then pure ()
           else runWXYZ config st main_loop >> (liftIO _wxyz_shutdown)
+
+-- ---------------------------------------------------------------------
+-- Convenient wrappers to state
+
+-- | Run a monadic action with the current stack set
+withWindowSet :: (WindowSet -> WXYZ a) -> WXYZ a
+withWindowSet f = gets windowset >>= f
+
+
+-- ---------------------------------------------------------------------
+-- General utilities
+
+-- | Lift an 'IO' action into the 'WXYZ' monad
+io :: MonadIO m => IO a -> m a
+io = liftIO
+
+-- | This is basically a map function, running a function in the 'WXYZ' monad on
+-- each workspace with the output of that function being the modified workspace.
+runOnWorkspaces :: (WindowSpace -> WXYZ WindowSpace) -> WXYZ ()
+runOnWorkspaces job = do
+    ws <- gets windowset
+    h <- mapM job $ hidden ws
+    c:v <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
+             $ current ws : visible ws
+    modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }

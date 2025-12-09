@@ -9,6 +9,7 @@ import           Key
 import           Operations
 import           Tiling
 import           WXYZMonad
+import qualified StackSet as W
 
 main :: IO ()
 main = wxyz $
@@ -18,11 +19,18 @@ main = wxyz $
                }
   where
     keyBindings :: M.Map (Modifier,KeySym) (WXYZ ())
-    keyBindings = M.fromList [ ((wlr_modifier_alt, xkb_key_q),      terminate)
-                             , ((wlr_modifier_alt, xkb_key_t),      shell "alacritty")
-                             , ((wlr_modifier_alt, xkb_key_h),      hello)
-                             , ((wlr_modifier_alt, xkb_key_tab),    next_toplevel)
-                             ]
+    keyBindings = M.fromList
+        [ ((modMask, xkb_key_q),      terminate)
+        , ((modMask, xkb_key_t),      shell "alacritty")
+        , ((modMask, xkb_key_h),      hello)
+        , ((modMask, xkb_key_tab),    next_toplevel)
+
+        -- move focus up or down the window stack
+        , ((modMask, xkb_key_j),      windows W.focusDown)      -- %! Move focus to the next window
+        , ((modMask, xkb_key_k),      windows W.focusUp)        -- %! Move focus to the previous window
+        , ((modMask, xkb_key_m),      windows W.focusMaster  )  -- %! Move focus to the master window
+        ]
+    modMask = wlr_modifier_alt
     tiled   = Tall nmaster delta ratio
     nmaster = 1      -- Default number of windows in the master pane
     ratio   = 1/2    -- Default proportion of screen occupied by master pane

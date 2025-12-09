@@ -34,9 +34,17 @@ This means that:
     the core monad, e.g. workspaces could easily be implemented as a layout,
     allowing different implementations.
 
+Building
+========
 
-Check list
-==========
+First make sure wlroots-19 is installed and available on via pkg-config.
+Next, run `./Build build` to build, or `./Build run` to run.
+The `./Build` script is a thin wrapper around Cabal, first generating
+the protocol headers before exec-ing Cabal.
+
+
+To Dos
+======
 
 Bootstrap
 ---------

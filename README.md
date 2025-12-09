@@ -68,23 +68,22 @@ Cleanup
 
 - [ ] Fix StackSet to reflect Wayland.
 
-      Since Wayland has *real* multi-outputs, floating windows must be
-      associated with an output. We must also handle the case where
-      there are no screens. I think it may make sense to move handling
-      of floating windows to layouts.
+  Since Wayland has *real* multi-outputs, floating windows must be
+  associated with an output. We must also handle the case where
+  there are no screens.
 
-      It may also make sense to move Workspaces out of core functionality
-      and handle them elsewhere as well. This could allow us to, for example
-      split large monitors into multiple screens.
+  It may also make sense to move Workspaces out of core functionality
+  and handle them elsewhere as well. This could allow us to, for example
+  split large monitors into multiple screens.
 
 - [ ] Modularize components: Currently things are generally placed into similar
-      files as in XMonad. Some of these are quite large and diverse.
-      We should split these up and reorganize them.
+  files as in XMonad. Some of these are quite large and diverse.
+  We should split these up and reorganize them.
 
 - [ ] Reconsider type names e.g. Window vs TopLevel
 
 - [ ] Expand C event queue to a FIFO. This will stop the crash on during
-      shutdown.
+  shutdown.
 
 
 Other features

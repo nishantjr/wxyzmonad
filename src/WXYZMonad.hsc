@@ -267,6 +267,23 @@ handle_event (XdgTopLevelUnmapEvent win)
          put $ st{ windowset = StackSet.delete win (windowset st) }
          layoutWindows
 
+-- TODO: This is a hack: We just update the size of the current screen,
+-- and re-layout. This is a work-around for incorrectly structured
+-- StackSet.
+handle_event (OutputNewEvent output width height )
+    = do st <- get
+         let curr = (current.windowset) st
+         let curr' = curr { screenDetail= SD $ Rectangle
+               { rect_x=0, rect_y=0,
+                 rect_width=(coerce width), rect_height=(coerce height) }
+             }
+         put $ st{ windowset = (windowset st) { current=curr' } }
+         layoutWindows
+    where coerce n = fromIntegral n
+
+handle_event e@(OutputDestroyEvent output)
+    = liftIO $ putStrLn $ "unhandled event: " ++ (show e)
+
 layoutWindows :: WXYZ ()
 layoutWindows
     = do st <- get
@@ -293,7 +310,7 @@ foreign import capi "clib.h wxyz_shutdown" _wxyz_shutdown :: IO ()
 wxyz :: WXYZConf ->  IO ()
 wxyz config =
     do let layout = layoutHook config
-           num_outputs = 1
+           num_outputs = 0
            initialWinset = let padToLen n xs = take (max n (length xs)) $ xs ++ repeat ""
                 in new layout (padToLen num_outputs (WXYZMonad.workspaces config)) $ map SD [Rectangle 0 0 500 500]
            st = State initialWinset

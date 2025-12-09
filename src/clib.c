@@ -575,6 +575,11 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&output->destroy.link);
     wl_list_remove(&output->link);
     free(output);
+
+    assert(global_have_event == false);
+    global_event.type = OUTPUT_DESTROY;
+    global_event.output_new.output = output;
+    global_have_event = true;
 }
 
 static void server_new_output(struct wl_listener *listener, void *data) {
@@ -639,6 +644,13 @@ static void server_new_output(struct wl_listener *listener, void *data) {
         wlr_output);
     struct wlr_scene_output *scene_output = wlr_scene_output_create(server->scene, wlr_output);
     wlr_scene_output_layout_add_output(server->scene_layout, l_output, scene_output);
+
+    assert(global_have_event == false);
+    global_event.type = OUTPUT_NEW;
+    global_event.output_new.output = output;
+    global_event.output_new.height = output->wlr_output->height;
+    global_event.output_new.width = output->wlr_output->width;
+    global_have_event = true;
 }
 
 static void xdg_toplevel_map(struct wl_listener *listener, void *data) {

@@ -138,6 +138,8 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- that are produced are used to track those workspaces visible as
 -- Xinerama screens, and those workspaces not visible anywhere.
 
+-- TOOO: The StackSet structure no longer makes sense on Wayland.
+-- See README.
 data StackSet i l a sid sd =
     StackSet { current  :: !(Screen i l a sid sd)    -- ^ currently focused workspace
              , visible  :: [Screen i l a sid sd]     -- ^ non-focused workspaces, visible in xinerama

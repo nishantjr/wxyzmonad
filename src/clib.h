@@ -8,6 +8,7 @@
 
 struct wlr_seat;
 struct wxyz_toplevel;
+struct wxyz_output;
 
 struct wxyz_keyboard_key_event {
     struct wlr_keyboard_key_event event;
@@ -19,10 +20,19 @@ struct wxyz_keyboard_key_event {
 struct wxyz_xdg_toplevel_map_event      { struct wxyz_toplevel* toplevel; };
 struct wxyz_xdg_toplevel_unmap_event    { struct wxyz_toplevel* toplevel; };
 
+struct wxyz_output_new_event            { struct wxyz_output* output;
+                                          int32_t width;
+                                          int32_t height;
+                                        };
+struct wxyz_output_destroy_event        { struct wxyz_output* output; };
+// TOOO: Also handle output_commit
+
 enum wxyz_event_type {
     KEYBOARD_KEY = 1,
     XDG_TOPLEVEL_MAP,
     XDG_TOPLEVEL_UNMAP,
+    OUTPUT_NEW,
+    OUTPUT_DESTROY
 };
 struct wxyz_event {
     enum wxyz_event_type type;
@@ -30,6 +40,9 @@ struct wxyz_event {
         struct wxyz_keyboard_key_event          keyboard_key;
         struct wxyz_xdg_toplevel_map_event      xdg_toplevel_map;
         struct wxyz_xdg_toplevel_unmap_event    xdg_toplevel_unmap;
+
+        struct wxyz_output_new_event            output_new;
+        struct wxyz_output_destroy_event        output_destroy;
     };
 };
 
@@ -44,3 +57,4 @@ void focus_toplevel(struct wxyz_toplevel *toplevel);
 void wxyz_next_toplevel();
 void wxyz_toplevel_set_position(struct wxyz_toplevel*, int x, int y);
 void wxyz_toplevel_set_size(struct wxyz_toplevel*, int width, int height);
+

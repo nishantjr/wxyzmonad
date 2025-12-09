@@ -11,6 +11,7 @@ module Event
     where
 
 import           Data.Word
+import           Data.Int
 import           Foreign.Ptr
 import           Foreign.Storable
 
@@ -23,6 +24,7 @@ state_Pressed :: WLKeyboardKeyState
 state_Pressed = #const WL_KEYBOARD_KEY_STATE_PRESSED
 
 data XdgTopLevel
+data COutput
 data Seat
 data Event = KeyPressEvent {
                 time_msec :: Word32,
@@ -36,6 +38,12 @@ data Event = KeyPressEvent {
              }
            | XdgTopLevelMapEvent { toplevel :: Ptr XdgTopLevel }
            | XdgTopLevelUnmapEvent  { toplevel :: Ptr XdgTopLevel }
+           | OutputNewEvent {
+               output :: Ptr COutput,
+               width :: Int32,
+               height :: Int32
+             }
+           | OutputDestroyEvent  { output :: Ptr COutput }
  deriving Show
 
 foreign import capi "clib.h wxyz_next_event"
@@ -63,5 +71,13 @@ next_event =
     unparse #{const XDG_TOPLEVEL_UNMAP} ptr
         = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_unmap.toplevel} ptr)
              pure $ Just (XdgTopLevelUnmapEvent toplevel)
+    unparse #{const OUTPUT_NEW} ptr
+        = do output <- (#{peek struct wxyz_event, output_new.output} ptr)
+             height <- (#{peek struct wxyz_event, output_new.height} ptr)
+             width <- (#{peek struct wxyz_event, output_new.width} ptr)
+             pure $ Just (OutputNewEvent output width height)
+    unparse #{const OUTPUT_DESTROY} ptr
+        = do output <- (#{peek struct wxyz_event, output_destroy.output} ptr)
+             pure $ Just (OutputDestroyEvent output)
     unparse e _
         = error $ "Unknown event" ++ (show e)

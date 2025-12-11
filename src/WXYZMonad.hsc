@@ -270,7 +270,7 @@ handle_event (XdgTopLevelUnmapEvent win)
 -- TODO: This is a hack: We just update the size of the current screen,
 -- and re-layout. This is a work-around for incorrectly structured
 -- StackSet.
-handle_event (OutputNewEvent output width height )
+handle_event (OutputNewEvent _output width height)
     = do st <- get
          let curr = (current.windowset) st
          let curr' = curr { screenDetail= SD $ Rectangle
@@ -281,7 +281,7 @@ handle_event (OutputNewEvent output width height )
          layoutWindows
     where coerce n = fromIntegral n
 
-handle_event e@(OutputDestroyEvent output)
+handle_event e@(OutputDestroyEvent _output)
     = liftIO $ putStrLn $ "unhandled event: " ++ (show e)
 
 layoutWindows :: WXYZ ()

@@ -15,13 +15,10 @@ module Operations
 import           Control.Monad
 import           Control.Monad.Extra (whenJust)
 import           Control.Monad.IO.Class
-import           Control.Monad.Reader
 import           Control.Monad.State
-import           Data.List (nub, (\\))
 import           Data.Maybe
-import           Data.Monoid (Endo(..),Any(..))
+import           Data.Monoid (Any(..))
 import qualified Data.Map as M
-import qualified Data.Set as S
 import qualified System.Process as P
 
 import qualified StackSet as W
@@ -55,15 +52,9 @@ hello = liftIO $ putStr "====================\nHello!\n=========================
 windows :: (WindowSet -> WindowSet) -> WXYZ ()
 windows f = do
     State { windowset = old } <- get
-    let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
-        newwindows = W.allWindows ws \\ W.allWindows old
-        ws = f old
+    let ws = f old
 
     modify (\s -> s { windowset = ws })
-
-    -- notify non visibility
-    let tags_oldvisible = map (W.tag . W.workspace) $ W.current old : W.visible old
-        gottenhidden    = filter (flip elem tags_oldvisible . W.tag) $ W.hidden ws
 
     -- for each workspace, layout the currently visible workspaces
     let allscreens     = W.screens ws
@@ -92,8 +83,6 @@ windows f = do
 
         -- return the visible windows for this workspace:
         return vs
-
-    let visible = map fst rects
 
     mapM_ (uncurry tileWindow) rects
 

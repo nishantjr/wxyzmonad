@@ -14,6 +14,7 @@ import           Data.Word
 import           Data.Int
 import           Foreign.Ptr
 import           Foreign.Storable
+import           Foreign.Marshal.Alloc (free)
 
 import           Key
 
@@ -54,7 +55,9 @@ next_event =
      if (ptr == nullPtr)
      then pure Nothing
      else do ty <- #{peek struct wxyz_event, type} ptr
-             unparse ty ptr
+             res <- unparse ty ptr
+             free ptr
+             pure res
   where
     unparse :: Word8 -> Ptr Event -> IO (Maybe Event)
     unparse #{const KEYBOARD_KEY} ptr

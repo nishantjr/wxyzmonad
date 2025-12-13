@@ -120,17 +120,19 @@ static struct wxyz_server global_server = {0};;
 static bool global_is_running = false;
 
 static bool global_have_event = false;
-static struct wxyz_event global_event = {0};
+static struct wl_list event_queue = {0};
 /* ------------------------------------------------------------------------- */
 
 /* -- Events -- */
 
+// Allocates and adds a new event in the queue; initialized to null.
 struct wxyz_event* wxyz_new_event() {
-    assert(!global_have_event);
-    global_have_event = true;
-    return &global_event;
+    struct wxyz_event *ev = calloc(1, sizeof(*ev));
+    wl_list_insert(&event_queue, &ev->link); // insert at front
+    return ev;
 }
 
+// Returns event from the head of the queue. Must be freed.
 struct wxyz_event* wxyz_next_event()
 {
     struct wl_display* display = global_server.wl_display;
@@ -139,9 +141,11 @@ struct wxyz_event* wxyz_next_event()
         if (wl_event_loop_dispatch(wl_display_get_event_loop(display), -1) < 0)
             return NULL;
 
-        if (global_have_event) {
-            global_have_event = false;
-            return &global_event;
+        if (!wl_list_empty(&event_queue)) {
+            struct wl_list* last = event_queue.prev;
+            wl_list_remove(last);
+            struct wxyz_event* ret = NULL;
+            return wl_container_of(last, ret, link);
         }
     }
     return NULL;
@@ -903,6 +907,8 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 int wxyz_init() {
     wlr_log_init(WLR_DEBUG, NULL);
     struct wxyz_server* server = &global_server;
+
+    wl_list_init(&event_queue);
 
     /* The Wayland display is managed by libwayland. It handles accepting
      * clients from the Unix socket, manging Wayland globals, and so on. */

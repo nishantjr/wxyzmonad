@@ -82,7 +82,7 @@ Cleanup
 
 - [ ] Reconsider type names e.g. Window vs TopLevel
 
-- [ ] Expand C event queue to a FIFO. This will stop the crash on during
+- [x] Expand C event queue to a FIFO. This will stop the crash on during
   shutdown.
 
 

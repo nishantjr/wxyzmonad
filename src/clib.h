@@ -35,6 +35,7 @@ enum wxyz_event_type {
     OUTPUT_DESTROY
 };
 struct wxyz_event {
+    struct wl_list link;
     enum wxyz_event_type type;
     union {
         struct wxyz_keyboard_key_event          keyboard_key;

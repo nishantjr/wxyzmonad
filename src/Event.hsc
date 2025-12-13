@@ -82,5 +82,10 @@ next_event =
     unparse #{const OUTPUT_DESTROY} ptr
         = do output <- (#{peek struct wxyz_event, output_destroy.output} ptr)
              pure $ Just (OutputDestroyEvent output)
+    unparse #{const OUTPUT_REQUEST_STATE} ptr
+        = do output <- (#{peek struct wxyz_event, output_new.output} ptr)
+             height <- (#{peek struct wxyz_event, output_new.height} ptr)
+             width <- (#{peek struct wxyz_event, output_new.width} ptr)
+             pure $ Just (OutputNewEvent output width height)
     unparse e _
         = error $ "Unknown event" ++ (show e)

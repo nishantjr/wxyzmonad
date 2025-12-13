@@ -25,14 +25,15 @@ struct wxyz_output_new_event            { struct wxyz_output* output;
                                           int32_t height;
                                         };
 struct wxyz_output_destroy_event        { struct wxyz_output* output; };
-// TOOO: Also handle output_commit
+typedef struct wxyz_output_new_event    wxyz_output_request_state_event; // alias
 
 enum wxyz_event_type {
     KEYBOARD_KEY = 1,
     XDG_TOPLEVEL_MAP,
     XDG_TOPLEVEL_UNMAP,
     OUTPUT_NEW,
-    OUTPUT_DESTROY
+    OUTPUT_DESTROY,
+    OUTPUT_REQUEST_STATE,
 };
 struct wxyz_event {
     struct wl_list link;
@@ -44,6 +45,7 @@ struct wxyz_event {
 
         struct wxyz_output_new_event            output_new;
         struct wxyz_output_destroy_event        output_destroy;
+               wxyz_output_request_state_event  output_request_state;
     };
 };
 

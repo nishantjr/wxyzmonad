@@ -594,6 +594,12 @@ static void output_request_state(struct wl_listener *listener, void *data) {
     struct wxyz_output *output = wl_container_of(listener, output, request_state);
     const struct wlr_output_event_request_state *event = data;
     wlr_output_commit_state(output->wlr_output, event->state);
+
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = OUTPUT_REQUEST_STATE;
+    wx_event->output_new.output = output;
+    wx_event->output_new.height = output->wlr_output->height;
+    wx_event->output_new.width = output->wlr_output->width;
 }
 
 static void output_destroy(struct wl_listener *listener, void *data) {

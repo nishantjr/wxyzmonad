@@ -59,7 +59,7 @@ available I'd likely be able to use this project as my daily driver.
 - [ ] Fullscreen
 - [ ] Clipboard and selection functionality, clipboard managers
 - [ ] Basic multiple outputs support
-- [ ] Screen sharing
+- [ ] Screen sharing / screenshots
 - [ ] Mouse bindings
 - [ ] Lockscreen
 
@@ -84,6 +84,8 @@ Cleanup
 
 - [x] Expand C event queue to a FIFO. This will stop the crash on during
   shutdown.
+
+- [ ] Snapshot based testing in a container
 
 
 Other features

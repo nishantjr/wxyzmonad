@@ -52,10 +52,10 @@ Bootstrap
 These are features I'd like to see before declaring victory. Once these are
 available I'd likely be able to use this project as my daily driver.
 
-- [x] Tiling using XMonad layouts
+- [x] Tiling using XMonad layouts, sendMessage to modify layouts
+- [x] Startup action
 - [ ] Floating
 - [ ] Layers: Support clients such as Waybar, bemenu, etc
-- [ ] Startup action
 - [ ] Fullscreen
 - [ ] Clipboard and selection functionality, clipboard managers
 - [ ] Basic multiple outputs support

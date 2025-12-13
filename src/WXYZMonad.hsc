@@ -84,6 +84,7 @@ data WXYZState = State {
 data WXYZConf = Config {
     keyBindings :: M.Map (Modifier,KeySym) (WXYZ ()),
     layoutHook :: Layout Window,
+    startupHook :: WXYZ (),
     workspaces :: ![String] -- ^ The list of workspaces' names
 }
 
@@ -317,7 +318,9 @@ wxyz config =
        ret <- _wxyz_init
        if (ret /= 0)
           then pure ()
-          else runWXYZ config st main_loop >> (liftIO _wxyz_shutdown)
+          else runWXYZ config st (startupHook config)
+            >> runWXYZ config st main_loop
+            >> (liftIO _wxyz_shutdown)
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state

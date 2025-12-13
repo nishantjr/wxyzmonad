@@ -123,6 +123,32 @@ static bool global_have_event = false;
 static struct wxyz_event global_event = {0};
 /* ------------------------------------------------------------------------- */
 
+/* -- Events -- */
+
+struct wxyz_event* wxyz_new_event() {
+    assert(!global_have_event);
+    global_have_event = true;
+    return &global_event;
+}
+
+struct wxyz_event* wxyz_next_event()
+{
+    struct wl_display* display = global_server.wl_display;
+    while (global_is_running) {
+        wl_display_flush_clients(display);
+        if (wl_event_loop_dispatch(wl_display_get_event_loop(display), -1) < 0)
+            return NULL;
+
+        if (global_have_event) {
+            global_have_event = false;
+            return &global_event;
+        }
+    }
+    return NULL;
+}
+
+
+
 void wxyz_toplevel_set_position(struct wxyz_toplevel* toplevel, int x, int y) {
     wlr_scene_node_set_position(&toplevel->scene_tree->node, x, y);
 }
@@ -207,13 +233,12 @@ static void keyboard_handle_key(
     xkb_keysym_t sym = xkb_state_key_get_one_sym(
             keyboard->wlr_keyboard->xkb_state, keycode);
 
-    assert(global_have_event == false);
-    global_event.type = KEYBOARD_KEY;
-    global_event.keyboard_key.event = *event;
-    global_event.keyboard_key.keysym = sym;
-    global_event.keyboard_key.seat = seat;
-    global_event.keyboard_key.modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
-    global_have_event = true;
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = KEYBOARD_KEY;
+    wx_event->keyboard_key.event = *event;
+    wx_event->keyboard_key.keysym = sym;
+    wx_event->keyboard_key.seat = seat;
+    wx_event->keyboard_key.modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
 }
 
 static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
@@ -576,10 +601,9 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&output->link);
     free(output);
 
-    assert(global_have_event == false);
-    global_event.type = OUTPUT_DESTROY;
-    global_event.output_new.output = output;
-    global_have_event = true;
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = OUTPUT_DESTROY;
+    wx_event->output_new.output = output;
 }
 
 static void server_new_output(struct wl_listener *listener, void *data) {
@@ -645,12 +669,11 @@ static void server_new_output(struct wl_listener *listener, void *data) {
     struct wlr_scene_output *scene_output = wlr_scene_output_create(server->scene, wlr_output);
     wlr_scene_output_layout_add_output(server->scene_layout, l_output, scene_output);
 
-    assert(global_have_event == false);
-    global_event.type = OUTPUT_NEW;
-    global_event.output_new.output = output;
-    global_event.output_new.height = output->wlr_output->height;
-    global_event.output_new.width = output->wlr_output->width;
-    global_have_event = true;
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = OUTPUT_NEW;
+    wx_event->output_new.output = output;
+    wx_event->output_new.height = output->wlr_output->height;
+    wx_event->output_new.width = output->wlr_output->width;
 }
 
 static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
@@ -661,10 +684,9 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
 
     focus_toplevel(toplevel);
 
-    assert(global_have_event == false);
-    global_event.type = XDG_TOPLEVEL_MAP;
-    global_event.xdg_toplevel_map.toplevel = toplevel;
-    global_have_event = true;
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = XDG_TOPLEVEL_MAP;
+    wx_event->xdg_toplevel_map.toplevel = toplevel;
 }
 
 static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
@@ -678,10 +700,9 @@ static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
 
     wl_list_remove(&toplevel->link);
 
-    assert(global_have_event == false);
-    global_event.type = XDG_TOPLEVEL_UNMAP;
-    global_event.xdg_toplevel_unmap.toplevel = toplevel;
-    global_have_event = true;
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = XDG_TOPLEVEL_UNMAP;
+    wx_event->xdg_toplevel_unmap.toplevel = toplevel;
 }
 
 static void xdg_toplevel_commit(struct wl_listener *listener, void *data) {
@@ -1035,22 +1056,6 @@ int wxyz_init() {
             socket);
 
     global_is_running = true;
-}
-
-struct wxyz_event* wxyz_next_event()
-{
-    struct wl_display* display = global_server.wl_display;
-    while (global_is_running) {
-        wl_display_flush_clients(display);
-        if (wl_event_loop_dispatch(wl_display_get_event_loop(display), -1) < 0)
-            return NULL;
-
-        if (global_have_event) {
-            global_have_event = false;
-            return &global_event;
-        }
-    }
-    return NULL;
 }
 
 void wxyz_shutdown() {

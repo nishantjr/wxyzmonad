@@ -26,7 +26,6 @@ main = wxyz $
         , ((modMask, xkb_key_d),      shell "bemenu-run")
         , ((modMask, xkb_key_b),      shell "swaybg -c ffffff") -- Swaybg doesn't work currently
         , ((modMask, xkb_key_h),      hello)
-        , ((modMask, xkb_key_tab),    next_toplevel)
 
         -- move focus up or down the window stack
         , ((modMask, xkb_key_h),      sendMessage Shrink)       -- %! Shrink the master area

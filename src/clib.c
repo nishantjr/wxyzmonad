@@ -80,7 +80,6 @@ struct wxyz_output {
 };
 
 struct wxyz_toplevel {
-    struct wl_list link;
     struct wxyz_server *server;
     struct wlr_xdg_toplevel *xdg_toplevel;
     struct wlr_scene_tree *scene_tree;
@@ -702,8 +701,6 @@ static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
     if (toplevel == toplevel->server->grabbed_toplevel) {
         reset_cursor_mode(toplevel->server);
     }
-
-    wl_list_remove(&toplevel->link);
 
     struct wxyz_event* wx_event = wxyz_new_event();
     wx_event->type = XDG_TOPLEVEL_UNMAP;

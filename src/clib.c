@@ -45,7 +45,6 @@ struct wxyz_server {
     struct wlr_xdg_shell *xdg_shell;
     struct wl_listener new_xdg_toplevel;
     struct wl_listener new_xdg_popup;
-    struct wl_list toplevels;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_mgr;
@@ -189,8 +188,6 @@ void focus_toplevel(struct wxyz_toplevel *toplevel) {
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
     /* Move the toplevel to the front */
     wlr_scene_node_raise_to_top(&toplevel->scene_tree->node);
-    wl_list_remove(&toplevel->link);
-    wl_list_insert(&server->toplevels, &toplevel->link);
     /* Activate the new surface */
     wlr_xdg_toplevel_set_activated(toplevel->xdg_toplevel, true);
     /*
@@ -690,8 +687,6 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
     /* Called when the surface is mapped, or ready to display on-screen. */
     struct wxyz_toplevel *toplevel = wl_container_of(listener, toplevel, map);
 
-    wl_list_insert(&toplevel->server->toplevels, &toplevel->link);
-
     focus_toplevel(toplevel);
 
     struct wxyz_event* wx_event = wxyz_new_event();
@@ -986,7 +981,6 @@ int wxyz_init() {
      * used for application windows. For more detail on shells, refer to
      * https://drewdevault.com/2018/07/29/Wayland-shells.html.
      */
-    wl_list_init(&server->toplevels);
     server->xdg_shell = wlr_xdg_shell_create(server->wl_display, 3);
     server->new_xdg_toplevel.notify = server_new_xdg_toplevel;
     wl_signal_add(&server->xdg_shell->events.new_toplevel, &server->new_xdg_toplevel);
@@ -1106,12 +1100,3 @@ void wxyz_terminate() {
     global_is_running = false;
     wl_display_terminate(global_server.wl_display);
 }
-
-void wxyz_next_toplevel() {
-    /* Cycle to the next toplevel */
-    if (wl_list_length(&global_server.toplevels) < 2) { return; }
-    struct wxyz_toplevel *next_toplevel =
-        wl_container_of(global_server.toplevels.prev, next_toplevel, link);
-    focus_toplevel(next_toplevel);
-}
-

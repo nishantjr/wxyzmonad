@@ -27,6 +27,9 @@
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include <wlr/types/wlr_output_layer.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
+
 /* For brevity's sake, struct members are annotated where they are used. */
 enum wxyz_cursor_mode {
     TINYWL_CURSOR_PASSTHROUGH,
@@ -45,6 +48,15 @@ struct wxyz_server {
     struct wlr_xdg_shell *xdg_shell;
     struct wl_listener new_xdg_toplevel;
     struct wl_listener new_xdg_popup;
+
+    struct wlr_layer_shell_v1 *layer_shell;
+    struct wl_list layer_surfaces;
+    struct wl_listener new_layer_surface;
+    struct wlr_scene_tree *layer_tree_background;
+    struct wlr_scene_tree *layer_tree_bottom;
+    struct wlr_scene_tree *layer_tree_normal;
+    struct wlr_scene_tree *layer_tree_top;
+    struct wlr_scene_tree *layer_tree_overlay;
 
     struct wlr_cursor *cursor;
     struct wlr_xcursor_manager *cursor_mgr;
@@ -99,6 +111,17 @@ struct wxyz_popup {
     struct wl_listener destroy;
 };
 
+struct wxyz_layer_surface {
+    struct wl_list link;
+    struct wxyz_server *server;
+    struct wlr_layer_surface_v1 *layer_surface;
+    struct wlr_scene_layer_surface_v1 *scene_tree;
+    struct wl_listener destroy;
+    struct wl_listener map;
+    struct wl_listener unmap;
+    struct wl_listener configure;
+};
+
 struct wxyz_keyboard {
     struct wl_list link;
     struct wxyz_server *server;
@@ -142,8 +165,8 @@ struct wxyz_event* wxyz_next_event()
         if (!wl_list_empty(&event_queue)) {
             struct wl_list* last = event_queue.prev;
             wl_list_remove(last);
-            struct wxyz_event* ret = NULL;
-            return wl_container_of(last, ret, link);
+            struct wxyz_event* ret = wl_container_of(last, ret, link);
+            return ret;
         }
     }
     return NULL;
@@ -826,7 +849,7 @@ static void server_new_xdg_toplevel(struct wl_listener *listener, void *data) {
     toplevel->server = server;
     toplevel->xdg_toplevel = xdg_toplevel;
     toplevel->scene_tree =
-        wlr_scene_xdg_surface_create(&toplevel->server->scene->tree, xdg_toplevel->base);
+        wlr_scene_xdg_surface_create(toplevel->server->layer_tree_normal, xdg_toplevel->base);
     toplevel->scene_tree->node.data = toplevel;
     xdg_toplevel->base->data = toplevel->scene_tree;
 
@@ -898,6 +921,164 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 
     popup->destroy.notify = xdg_popup_destroy;
     wl_signal_add(&xdg_popup->events.destroy, &popup->destroy);
+}
+
+
+/* ------------------------------------------------------------------------- */
+
+void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *surface) {
+    if (!surface) { return; }
+
+    struct wlr_seat *seat = server->seat;
+    struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+
+    if (prev_surface == surface) { return; }
+    if (prev_surface) {
+        // Deactivate the previously focused surface if it's a toplevel.
+        struct wlr_xdg_toplevel *prev_toplevel =
+            wlr_xdg_toplevel_try_from_wlr_surface(prev_surface);
+        if (prev_toplevel) {
+            wlr_xdg_toplevel_set_activated(prev_toplevel, false);
+        }
+    }
+
+    /* Activate the new surface */
+    struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
+    if (keyboard) {
+        wlr_seat_keyboard_notify_enter(seat, surface, keyboard->keycodes,
+                                       keyboard->num_keycodes,
+                                       &keyboard->modifiers);
+    }
+}
+
+
+void layer_surface_map(struct wl_listener *listener, void *data) {
+   struct wxyz_layer_surface *wxyz_surface =
+       wl_container_of(listener, wxyz_surface, map);
+   struct wlr_layer_surface_v1 *wlr_layer_surface = wxyz_surface->layer_surface;
+
+   // Get output dimensions
+   int width = wlr_layer_surface->output->width;
+   int height = wlr_layer_surface->output->height;
+
+   // Ensure dimensions are valid
+   if (wlr_layer_surface->current.desired_width <= 0
+            || wlr_layer_surface->current.desired_width > width) {
+       wlr_layer_surface->current.desired_width = width / 2;
+   }
+   if (wlr_layer_surface->current.desired_height <= 0 ||
+       wlr_layer_surface->current.desired_height > height) {
+     wlr_layer_surface->current.desired_height = 25;
+   }
+
+   // Configure surface with validated dimensions
+   wlr_layer_surface_v1_configure(wlr_layer_surface,
+                                  wlr_layer_surface->current.desired_width,
+                                  wlr_layer_surface->current.desired_height);
+
+   layer_surface_focus(wxyz_surface->server, wlr_layer_surface->surface);
+}
+
+void layer_surface_unmap(struct wl_listener *listener, void *data) {
+    struct wxyz_layer_surface *toplevel =
+        wl_container_of(listener, toplevel, unmap);
+    wlr_log(WLR_DEBUG, "Layer surface unmapped");
+}
+
+void layer_surface_configure(struct wl_listener *listener, void *data) {
+  struct wxyz_layer_surface *layer_surface =
+      wl_container_of(listener, layer_surface, configure);
+  struct wlr_layer_surface_v1 *wlr_layer_surface = layer_surface->layer_surface;
+  struct wlr_output *output = wlr_layer_surface->output;
+
+  if (!output) {
+    return;
+  }
+
+  uint32_t width = wlr_layer_surface->current.desired_width;
+  uint32_t height = wlr_layer_surface->current.desired_height;
+
+  // Calculate width/height if they're set to zero
+  if (width == 0) { width = 10; }
+  if (height == 0) { height = 10; }
+  wlr_layer_surface_v1_configure(wlr_layer_surface, width, height);
+}
+
+static void wxyz_layer_surface_destroy(struct wl_listener *listener, void *data) {
+    struct wxyz_layer_surface *wxyz_layer = wl_container_of(listener, wxyz_layer, destroy);
+    wlr_log(WLR_DEBUG, "Destroying layer surface");
+    wl_list_remove(&wxyz_layer->link);
+    wl_list_remove(&wxyz_layer->destroy.link);
+    wl_list_remove(&wxyz_layer->map.link);
+    wl_list_remove(&wxyz_layer->unmap.link);
+    wl_list_remove(&wxyz_layer->configure.link);
+    free(wxyz_layer);
+}
+
+static void wxyz_new_layer_surface(struct wl_listener *listener, void *data) {
+    struct wxyz_server *server =
+        wl_container_of(listener, server, new_layer_surface);
+    struct wlr_layer_surface_v1 *wl_layer = data;
+    wlr_log(WLR_DEBUG, "New layer surface: namespace %s layer %d",
+            wl_layer->namespace, wl_layer->pending.layer);
+
+    if (!wl_layer->output && !wl_list_empty(&server->outputs)) {
+      struct wxyz_output *first_output =
+          wl_container_of(server->outputs.next, first_output, link);
+      wl_layer->output = first_output->wlr_output;
+    }
+
+    // Pick the appropriate scene tree
+    struct wlr_scene_tree *parent;
+    switch (wl_layer->pending.layer) {
+    case ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND:
+      parent = server->layer_tree_background;
+      break;
+    case ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM:
+      parent = server->layer_tree_bottom;
+      break;
+    case ZWLR_LAYER_SHELL_V1_LAYER_TOP:
+      parent = server->layer_tree_top;
+      break;
+    case ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY:
+      parent = server->layer_tree_overlay;
+      break;
+    default:
+      wlr_log(WLR_ERROR, "Invalid layer surface layer %d",
+              wl_layer->pending.layer);
+      return;
+    }
+
+    struct wxyz_layer_surface *wxyz_surface = calloc(1, sizeof(*wxyz_surface));
+    wxyz_surface->server = server;
+    wxyz_surface->layer_surface = wl_layer;
+
+    // Create scene layer wxyz_surface
+    wxyz_surface->scene_tree =
+        wlr_scene_layer_surface_v1_create(parent, wl_layer);
+    if (!wxyz_surface->scene_tree) {
+      free(wxyz_surface);
+      return;
+    }
+
+    wl_layer->data = wxyz_surface->scene_tree;
+
+    wxyz_surface->destroy.notify = wxyz_layer_surface_destroy;
+    wl_signal_add(&wl_layer->events.destroy, &wxyz_surface->destroy);
+
+    wxyz_surface->map.notify = layer_surface_map;
+    wl_signal_add(&wl_layer->surface->events.map, &wxyz_surface->map);
+
+    wxyz_surface->unmap.notify = layer_surface_unmap;
+    wl_signal_add(&wl_layer->surface->events.unmap, &wxyz_surface->unmap);
+
+    wxyz_surface->configure.notify = layer_surface_configure;
+    wl_signal_add(&wl_layer->surface->events.commit,
+                  &wxyz_surface->configure); // NOT wxyz_surface->events.configure// The
+                                        // event is directly on the layer wxyz_surface/
+                                        // Changed from wxyz_surface->events.commit
+
+    wl_list_insert(&server->layer_surfaces, &wxyz_surface->link);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -984,6 +1165,16 @@ int wxyz_init() {
     server->new_xdg_popup.notify = server_new_xdg_popup;
     wl_signal_add(&server->xdg_shell->events.new_popup, &server->new_xdg_popup);
 
+    wl_list_init(&server->layer_surfaces);
+    server->layer_shell = wlr_layer_shell_v1_create(server->wl_display, 4);
+    server->new_layer_surface.notify = wxyz_new_layer_surface;
+    wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
+    server->layer_tree_background = wlr_scene_tree_create(&server->scene->tree);
+    server->layer_tree_bottom = wlr_scene_tree_create(&server->scene->tree);
+    server->layer_tree_normal = wlr_scene_tree_create(&server->scene->tree);
+    server->layer_tree_top = wlr_scene_tree_create(&server->scene->tree);
+    server->layer_tree_overlay = wlr_scene_tree_create(&server->scene->tree);
+
     /*
      * Creates a cursor, which is a wlroots utility for tracking the cursor
      * image shown on screen.
@@ -1069,6 +1260,8 @@ void wxyz_shutdown() {
 
     wl_list_remove(&server->new_xdg_toplevel.link);
     wl_list_remove(&server->new_xdg_popup.link);
+
+    wl_list_remove(&server->new_layer_surface.link);
 
     wl_list_remove(&server->cursor_motion.link);
     wl_list_remove(&server->cursor_motion_absolute.link);

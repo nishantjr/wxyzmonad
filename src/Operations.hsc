@@ -8,7 +8,9 @@ module Operations
     , terminate
     , setTopFocus
     , windows
+    , refresh
     , sendMessage
+    , moveResizeWindow
     ) where
 
 import           Control.Monad
@@ -19,9 +21,11 @@ import           Data.Maybe
 import           Data.Monoid (Any(..))
 import qualified Data.Map as M
 import qualified System.Process as P
+import           Foreign.Ptr
 
 import qualified StackSet as W
 import           WXYZMonad
+import           Event
 import           Tiling (Full(..))
 
 foreign import capi "clib.h wxyz_terminate"
@@ -82,6 +86,15 @@ windows f = do
 
     setTopFocus
 
+-- | Render the currently visible workspaces, as determined by
+-- the 'StackSet'. Also, set focus to the focused window.
+--
+-- This is our 'view' operation (MVC), in that it pretty prints our model
+-- with WXYZ calls.
+--
+refresh :: WXYZ ()
+refresh = windows id
+
 -- | Modify the @WindowSet@ in state with no special handling.
 modifyWindowSet :: (WindowSet -> WindowSet) -> WXYZ ()
 modifyWindowSet f = modify $ \xst -> xst { windowset = f (windowset xst) }
@@ -124,14 +137,25 @@ scaleRationalRect (Rectangle sx sy sw sh) (W.RationalRect rx ry rw rh)
 
 
 foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_position"
-    _wxyz_toplevel_set_position :: Window -> Position -> Position -> IO ()
+    _wxyz_toplevel_set_position :: Ptr CXdgTopLevel -> Position -> Position -> IO ()
 foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_size"
-    _wxyz_toplevel_set_size :: Window -> Dimension -> Dimension -> IO ()
+    _wxyz_toplevel_set_size :: Ptr CXdgTopLevel -> Dimension -> Dimension -> IO ()
+
+foreign import capi "wlr/types/wlr_seat.h wxyz_layer_surface_set_position"
+    _wxyz_layer_surface_set_position :: Ptr CLayerSurface -> Position -> Position -> IO ()
+foreign import capi "wlr/types/wlr_seat.h wxyz_layer_surface_set_size"
+    _wxyz_layer_surface_set_size :: Ptr CLayerSurface -> Dimension -> Dimension -> IO ()
 
 moveResizeWindow :: Window -> Position -> Position -> Dimension -> Dimension -> IO ()
-moveResizeWindow win x y w h
-     = do _wxyz_toplevel_set_position win x y
-          _wxyz_toplevel_set_size win w h
+moveResizeWindow (TopLevel ptr) x y w h
+     = do _wxyz_toplevel_set_position ptr x y
+          _wxyz_toplevel_set_size ptr w h
+moveResizeWindow (LayerSurface ptr _layer) x y w h
+     = do _wxyz_layer_surface_set_position ptr x y
+          _wxyz_layer_surface_set_size ptr w h
+          -- TODO: How do we make this atomic to avoid a flicker?
+          -- position information is local to the compositor, but
+          -- the size needs a roundtrip to the client.
 
 
 -- ---------------------------------------------------------------------
@@ -142,9 +166,10 @@ setTopFocus :: WXYZ ()
 setTopFocus = withWindowSet $ maybe (pure ()) focusTopLevel . W.peek
 
 foreign import capi "clib.h focus_toplevel"
-    _focus_toplevel :: Window -> IO ()
+    _focus_toplevel :: Ptr CXdgTopLevel -> IO ()
 focusTopLevel :: Window -> WXYZ ()
-focusTopLevel w = liftIO $ _focus_toplevel w
+focusTopLevel (TopLevel w) = liftIO $ _focus_toplevel w
+focusTopLevel _ = error "Not implemented"
 
 
 ------------------------------------------------------------------------

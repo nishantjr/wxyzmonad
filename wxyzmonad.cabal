@@ -18,7 +18,7 @@ common warnings
 
 library
     import:           warnings
-    exposed-modules:  WXYZMonad, Key, Event, Operations, StackSet, Tiling
+    exposed-modules:  WXYZMonad, Key, Event, Operations, StackSet, Tiling, WXYZMain
     hs-source-dirs:   src/
     c-sources:        src/clib.c
     include-dirs:     src/, .build/protocols/

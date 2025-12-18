@@ -926,7 +926,7 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 
 /* ------------------------------------------------------------------------- */
 
-void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *surface) {
+static void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *surface) {
     if (!surface) { return; }
 
     struct wlr_seat *seat = server->seat;
@@ -952,7 +952,7 @@ void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *surface
 }
 
 
-void layer_surface_map(struct wl_listener *listener, void *data) {
+static void layer_surface_map(struct wl_listener *listener, void *data) {
    struct wxyz_layer_surface *wxyz_surface =
        wl_container_of(listener, wxyz_surface, map);
    struct wlr_layer_surface_v1 *wlr_layer_surface = wxyz_surface->layer_surface;
@@ -979,13 +979,21 @@ void layer_surface_map(struct wl_listener *listener, void *data) {
    layer_surface_focus(wxyz_surface->server, wlr_layer_surface->surface);
 }
 
-void layer_surface_unmap(struct wl_listener *listener, void *data) {
+void wxyz_layer_surface_set_position(struct wxyz_layer_surface* surface, int x, int y) {
+    wlr_scene_node_set_position(&surface->scene_tree->tree->node, x, y);
+}
+
+void wxyz_layer_surface_set_size(struct wxyz_layer_surface *surface, int width, int height) {
+   wlr_layer_surface_v1_configure(surface->layer_surface, width, height);
+}
+
+static void layer_surface_unmap(struct wl_listener *listener, void *data) {
     struct wxyz_layer_surface *toplevel =
         wl_container_of(listener, toplevel, unmap);
     wlr_log(WLR_DEBUG, "Layer surface unmapped");
 }
 
-void layer_surface_configure(struct wl_listener *listener, void *data) {
+static void layer_surface_configure(struct wl_listener *listener, void *data) {
   struct wxyz_layer_surface *layer_surface =
       wl_container_of(listener, layer_surface, configure);
   struct wlr_layer_surface_v1 *wlr_layer_surface = layer_surface->layer_surface;
@@ -1018,19 +1026,19 @@ static void wxyz_layer_surface_destroy(struct wl_listener *listener, void *data)
 static void wxyz_new_layer_surface(struct wl_listener *listener, void *data) {
     struct wxyz_server *server =
         wl_container_of(listener, server, new_layer_surface);
-    struct wlr_layer_surface_v1 *wl_layer = data;
+    struct wlr_layer_surface_v1 *wlr_surface = data;
     wlr_log(WLR_DEBUG, "New layer surface: namespace %s layer %d",
-            wl_layer->namespace, wl_layer->pending.layer);
+            wlr_surface->namespace, wlr_surface->pending.layer);
 
-    if (!wl_layer->output && !wl_list_empty(&server->outputs)) {
+    if (!wlr_surface->output && !wl_list_empty(&server->outputs)) {
       struct wxyz_output *first_output =
           wl_container_of(server->outputs.next, first_output, link);
-      wl_layer->output = first_output->wlr_output;
+      wlr_surface->output = first_output->wlr_output;
     }
 
     // Pick the appropriate scene tree
     struct wlr_scene_tree *parent;
-    switch (wl_layer->pending.layer) {
+    switch (wlr_surface->pending.layer) {
     case ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND:
       parent = server->layer_tree_background;
       break;
@@ -1045,35 +1053,35 @@ static void wxyz_new_layer_surface(struct wl_listener *listener, void *data) {
       break;
     default:
       wlr_log(WLR_ERROR, "Invalid layer surface layer %d",
-              wl_layer->pending.layer);
+              wlr_surface->pending.layer);
       return;
     }
 
     struct wxyz_layer_surface *wxyz_surface = calloc(1, sizeof(*wxyz_surface));
     wxyz_surface->server = server;
-    wxyz_surface->layer_surface = wl_layer;
+    wxyz_surface->layer_surface = wlr_surface;
 
     // Create scene layer wxyz_surface
     wxyz_surface->scene_tree =
-        wlr_scene_layer_surface_v1_create(parent, wl_layer);
+        wlr_scene_layer_surface_v1_create(parent, wlr_surface);
     if (!wxyz_surface->scene_tree) {
       free(wxyz_surface);
       return;
     }
 
-    wl_layer->data = wxyz_surface->scene_tree;
+    wlr_surface->data = wxyz_surface->scene_tree;
 
     wxyz_surface->destroy.notify = wxyz_layer_surface_destroy;
-    wl_signal_add(&wl_layer->events.destroy, &wxyz_surface->destroy);
+    wl_signal_add(&wlr_surface->events.destroy, &wxyz_surface->destroy);
 
     wxyz_surface->map.notify = layer_surface_map;
-    wl_signal_add(&wl_layer->surface->events.map, &wxyz_surface->map);
+    wl_signal_add(&wlr_surface->surface->events.map, &wxyz_surface->map);
 
     wxyz_surface->unmap.notify = layer_surface_unmap;
-    wl_signal_add(&wl_layer->surface->events.unmap, &wxyz_surface->unmap);
+    wl_signal_add(&wlr_surface->surface->events.unmap, &wxyz_surface->unmap);
 
     wxyz_surface->configure.notify = layer_surface_configure;
-    wl_signal_add(&wl_layer->surface->events.commit,
+    wl_signal_add(&wlr_surface->surface->events.commit,
                   &wxyz_surface->configure); // NOT wxyz_surface->events.configure// The
                                         // event is directly on the layer wxyz_surface/
                                         // Changed from wxyz_surface->events.commit

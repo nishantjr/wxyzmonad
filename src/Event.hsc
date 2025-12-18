@@ -3,9 +3,10 @@
 module Event
     ( Event(..)
     , Seat
-    , WLKeyboardKeyState
-    , XdgTopLevel
-    , state_Pressed
+
+    , CXdgTopLevel, CLayerSurface
+
+    , WLKeyboardKeyState, state_Pressed
     , next_event
     )
     where
@@ -24,7 +25,8 @@ type WLKeyboardKeyState = Word32
 state_Pressed :: WLKeyboardKeyState
 state_Pressed = #const WL_KEYBOARD_KEY_STATE_PRESSED
 
-data XdgTopLevel
+data CXdgTopLevel
+data CLayerSurface
 data COutput
 data Seat
 data Event = KeyPressEvent {
@@ -37,8 +39,8 @@ data Event = KeyPressEvent {
                                  -- it will be available after the current event is handled.
                                  -- Needed to pass to wlr_seat_keyboard_notify_key
              }
-           | XdgTopLevelMapEvent { toplevel :: Ptr XdgTopLevel }
-           | XdgTopLevelUnmapEvent  { toplevel :: Ptr XdgTopLevel }
+           | XdgTopLevelMapEvent { toplevel :: Ptr CXdgTopLevel }
+           | XdgTopLevelUnmapEvent  { toplevel :: Ptr CXdgTopLevel }
            | OutputNewEvent {
                output :: Ptr COutput,
                width :: Int32,

@@ -11,13 +11,19 @@ make_protocol_headers() {
     # you to rig these up to your build system yourself and provide them
     # in the include path.
     scanner=$(pkg-config --variable=wayland_scanner wayland-scanner)
-    protocols_xml=$(pkg-config --variable=pkgdatadir wayland-protocols)
+    wl_protocols_xml=$(pkg-config --variable=pkgdatadir wayland-protocols)
+    wlr_protocols_xml=$(pkg-config --variable=pkgdatadir wlr-protocols)
 
     mkdir -p "$protocol_dir"
     xdg_shell_h="$protocol_dir/xdg-shell-protocol.h"
     [[ -f "$xdg_shell_h" ]] ||
     "$scanner" server-header \
-        "$protocols_xml"/stable/xdg-shell/xdg-shell.xml "$xdg_shell_h"
+        "$wl_protocols_xml"/stable/xdg-shell/xdg-shell.xml "$xdg_shell_h"
+
+    layer_shell_h="$protocol_dir/wlr-layer-shell-unstable-v1-protocol.h"
+    [[ -f "$layer_shell_h" ]] ||
+    "$scanner" server-header \
+        "$wlr_protocols_xml"/unstable/wlr-layer-shell-unstable-v1.xml "$layer_shell_h"
 }
 
 make_protocol_headers

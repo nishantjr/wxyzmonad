@@ -9,13 +9,16 @@ import           Key
 import           Operations
 import           Tiling
 import           WXYZMonad
+import           WXYZMain
 import qualified StackSet as W
 
 main :: IO ()
 main = wxyz $
         Config { keyBindings
                , startupHook = shell "alacritty"
+
                , layoutHook = Layout tiled
+
                , workspaces = ["first", "second", "third"]
                }
   where

@@ -8,8 +8,9 @@ reasonable usable, incrementally, while keeping the implementation as simple and
 stupid as necessary.
 
 This project is inspired by [tiny-wlhs](https://github.com/l-Shane-l/tiny-wlhs).
-The main insight over that project is that an event stream is architecturally preferable to C callbacks.
-It makes implementing a monadic interface easy, without multi-layered Haskell-C-Haskell sandwiches.
+The main insight over that project is that an event stream is architecturally
+preferable to C callbacks. It makes implementing a monadic interface easy,
+without multi-layered Haskell-C-Haskell sandwiches.
 
 Our primary goal is to reach a basic level of usability, while still being
 XMonad-like, without too much bike-shedding. At the same time we aim to be
@@ -36,6 +37,8 @@ This means that:
 
 Building
 ========
+
+extra/wlr-protocols
 
 First make sure wlroots-19 is installed and available on via pkg-config.
 Next, run `./Build build` to build, or `./Build run` to run.
@@ -85,7 +88,10 @@ Cleanup
 - [x] Expand C event queue to a FIFO. This will stop the crash on during
   shutdown.
 
-- [ ] Snapshot based testing in a container
+- [ ] Re-evaluate whether we want to use wlr_scene_graph for rendering--we already
+  have a decarative configuration on the Haskell end.
+
+- [ ] Functional and unit testing
 
 
 Other features

@@ -926,7 +926,7 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 
 /* ------------------------------------------------------------------------- */
 
-void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *surface) {
+static void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *surface) {
     if (!surface) { return; }
 
     struct wlr_seat *seat = server->seat;
@@ -952,7 +952,7 @@ void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *surface
 }
 
 
-void layer_surface_map(struct wl_listener *listener, void *data) {
+static void layer_surface_map(struct wl_listener *listener, void *data) {
    struct wxyz_layer_surface *wxyz_surface =
        wl_container_of(listener, wxyz_surface, map);
    struct wlr_layer_surface_v1 *wlr_layer_surface = wxyz_surface->layer_surface;
@@ -987,13 +987,13 @@ void wxyz_layer_surface_set_size(struct wxyz_layer_surface *surface, int width, 
    wlr_layer_surface_v1_configure(surface->layer_surface, width, height);
 }
 
-void layer_surface_unmap(struct wl_listener *listener, void *data) {
+static void layer_surface_unmap(struct wl_listener *listener, void *data) {
     struct wxyz_layer_surface *toplevel =
         wl_container_of(listener, toplevel, unmap);
     wlr_log(WLR_DEBUG, "Layer surface unmapped");
 }
 
-void layer_surface_configure(struct wl_listener *listener, void *data) {
+static void layer_surface_configure(struct wl_listener *listener, void *data) {
   struct wxyz_layer_surface *layer_surface =
       wl_container_of(listener, layer_surface, configure);
   struct wlr_layer_surface_v1 *wlr_layer_surface = layer_surface->layer_surface;

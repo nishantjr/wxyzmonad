@@ -23,6 +23,7 @@ main = wxyz $
     keyBindings = M.fromList
         [ ((modMask, xkb_key_q),      terminate)
         , ((modMask, xkb_key_t),      shell "alacritty")
+        , ((modMask, xkb_key_d),      shell "bemenu-run")
         , ((modMask, xkb_key_h),      hello)
         , ((modMask, xkb_key_tab),    next_toplevel)
 

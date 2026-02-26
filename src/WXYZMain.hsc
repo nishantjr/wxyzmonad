@@ -28,7 +28,7 @@ handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
          case M.lookup (modifiers, keysym) (keyBindings config)
            of Just action | st == state_Pressed
                    -> action
-              _    -> liftIO $ _wlr_seat_keyboard_notify_key seat time_msec keycode st
+              _    -> io $ _wlr_seat_keyboard_notify_key seat time_msec keycode st
 
 handle_event (XdgTopLevelMapEvent win)
     = do st <- get
@@ -55,7 +55,7 @@ handle_event (OutputNewEvent _output width height)
     where coerce n = fromIntegral n
 
 handle_event e@(OutputDestroyEvent _output)
-    = liftIO $ putStrLn $ "unhandled event: " ++ (show e)
+    = io $ putStrLn $ "unhandled event: " ++ (show e)
 
 layoutWindows :: WXYZ ()
 layoutWindows
@@ -67,11 +67,11 @@ layoutWindows
   where
     ws st     = workspace $ current $ windowset st
     wsRect st = screenRect $ screenDetail $ current $ windowset st
-    setGeometry w r = liftIO $ do _wxyz_toplevel_set_position w (rect_x r) (rect_y r)
-                                  _wxyz_toplevel_set_size w (rect_width r) (rect_height r)
+    setGeometry w r = io $ do _wxyz_toplevel_set_position w (rect_x r) (rect_y r)
+                              _wxyz_toplevel_set_size w (rect_width r) (rect_height r)
 
 main_loop :: WXYZ ()
-main_loop = do e <- liftIO next_event
+main_loop = do e <- io next_event
                case e of
                  Nothing -> pure ()
                  Just e' -> do handle_event e'
@@ -92,5 +92,5 @@ wxyz config =
           then pure ()
           else runWXYZ config st (startupHook config)
             >> runWXYZ config st main_loop
-            >> (liftIO _wxyz_shutdown)
+            >> (io _wxyz_shutdown)
 

@@ -8,6 +8,7 @@ module Operations
     , terminate
     , setTopFocus
     , windows
+    , refresh
     , sendMessage
     ) where
 
@@ -81,6 +82,15 @@ windows f = do
     mapM_ (uncurry tileWindow) rects
 
     setTopFocus
+
+-- | Render the currently visible workspaces, as determined by
+-- the 'StackSet'. Also, set focus to the focused window.
+--
+-- This is our 'view' operation (MVC), in that it pretty prints our model
+-- with WXYZ calls.
+--
+refresh :: WXYZ ()
+refresh = windows id
 
 -- | Modify the @WindowSet@ in state with no special handling.
 modifyWindowSet :: (WindowSet -> WindowSet) -> WXYZ ()

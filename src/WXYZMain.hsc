@@ -12,6 +12,7 @@ import           Foreign.Ptr
 
 import           Event
 import           Key
+import           Operations
 import           StackSet hiding (modify)
 import           WXYZMonad
 
@@ -33,12 +34,12 @@ handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
 handle_event (XdgTopLevelMapEvent win)
     = do st <- get
          put $ st{ windowset = insertUp win (windowset st) }
-         layoutWindows
+         refresh
 
 handle_event (XdgTopLevelUnmapEvent win)
     = do st <- get
          put $ st{ windowset = StackSet.delete win (windowset st) }
-         layoutWindows
+         refresh
 
 -- TODO: This is a hack: We just update the size of the current screen,
 -- and re-layout. This is a work-around for incorrectly structured
@@ -51,24 +52,11 @@ handle_event (OutputNewEvent _output width height)
                  rect_width=(coerce width), rect_height=(coerce height) }
              }
          put $ st{ windowset = (windowset st) { current=curr' } }
-         layoutWindows
+         refresh
     where coerce n = fromIntegral n
 
 handle_event e@(OutputDestroyEvent _output)
     = io $ putStrLn $ "unhandled event: " ++ (show e)
-
-layoutWindows :: WXYZ ()
-layoutWindows
-    = do st <- get
-         (win_rect, _layout) <- runLayout (ws st) (wsRect st)
-         -- TODO: Update layout so layout's state is handled.
-         -- How do we do this when we are only Reader over Config?
-         mapM_ (\(w,r) -> setGeometry w r) win_rect
-  where
-    ws st     = workspace $ current $ windowset st
-    wsRect st = screenRect $ screenDetail $ current $ windowset st
-    setGeometry w r = io $ do _wxyz_toplevel_set_position w (rect_x r) (rect_y r)
-                              _wxyz_toplevel_set_size w (rect_width r) (rect_height r)
 
 main_loop :: WXYZ ()
 main_loop = do e <- io next_event

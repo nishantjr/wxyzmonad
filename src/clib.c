@@ -1013,14 +1013,14 @@ void layer_surface_configure(struct wl_listener *listener, void *data) {
 }
 
 static void wxyz_layer_surface_destroy(struct wl_listener *listener, void *data) {
-    struct wxyz_layer_surface *wxyz_layer = wl_container_of(listener, wxyz_layer, destroy);
+    struct wxyz_layer_surface *wxyz_surface = wl_container_of(listener, wxyz_surface, destroy);
     wlr_log(WLR_DEBUG, "Destroying layer surface");
-    wl_list_remove(&wxyz_layer->link);
-    wl_list_remove(&wxyz_layer->destroy.link);
-    wl_list_remove(&wxyz_layer->map.link);
-    wl_list_remove(&wxyz_layer->unmap.link);
-    wl_list_remove(&wxyz_layer->configure.link);
-    free(wxyz_layer);
+    wl_list_remove(&wxyz_surface->link);
+    wl_list_remove(&wxyz_surface->destroy.link);
+    wl_list_remove(&wxyz_surface->map.link);
+    wl_list_remove(&wxyz_surface->unmap.link);
+    wl_list_remove(&wxyz_surface->configure.link);
+    free(wxyz_surface);
 }
 
 static void wxyz_new_layer_surface(struct wl_listener *listener, void *data) {

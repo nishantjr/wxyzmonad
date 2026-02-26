@@ -30,10 +30,8 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Control.Monad.State.Class ()
-import           Data.Int
 import qualified Data.Map as M
 import           Data.Typeable
-import           Data.Word
 import           Foreign.Ptr
 import           System.Exit (ExitCode)
 import           System.IO (hPrint, stderr)
@@ -46,24 +44,6 @@ import           StackSet hiding (modify)
 
 ---------------
 -- Useful types
-
-type Position  = Int32
-type Dimension = Word32
-
-data Rectangle = Rectangle {
-            rect_x      :: !Position,
-            rect_y      :: !Position,
-            rect_width  :: !Dimension,
-            rect_height :: !Dimension
-        }
-    deriving (Eq,Show,Read)
-
-
-data Layer = Background | Bottom | Top | Overlay
-    deriving (Eq, Ord)
-data Window = TopLevel (Ptr CXdgTopLevel)
-            | LayerSurface (Ptr CLayerSurface) Layer
-    deriving (Eq, Ord)
 
 type WindowSet = StackSet WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window

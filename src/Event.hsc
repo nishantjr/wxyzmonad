@@ -7,6 +7,7 @@ module Event
     , CXdgTopLevel, CLayerSurface
 
     , WLKeyboardKeyState, state_Pressed
+    , Window(..), Rectangle(..), Dimension, Position, Layer(..)
     , next_event
     )
     where
@@ -24,6 +25,23 @@ import           Key
 type WLKeyboardKeyState = Word32
 state_Pressed :: WLKeyboardKeyState
 state_Pressed = #const WL_KEYBOARD_KEY_STATE_PRESSED
+
+type Position  = Int32
+type Dimension = Word32
+
+data Rectangle = Rectangle {
+            rect_x      :: !Position,
+            rect_y      :: !Position,
+            rect_width  :: !Dimension,
+            rect_height :: !Dimension
+        }
+    deriving (Eq,Show,Read)
+
+data Layer = Background | Bottom | Top | Overlay
+    deriving (Eq, Ord, Show)
+data Window = TopLevel (Ptr CXdgTopLevel)
+            | LayerSurface (Ptr CLayerSurface) Layer
+    deriving (Eq, Ord, Show)
 
 data CXdgTopLevel
 data CLayerSurface

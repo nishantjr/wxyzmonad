@@ -9,6 +9,7 @@ import           Key
 import           Operations
 import           Tiling
 import           WXYZMonad
+import           WXYZMain
 import qualified StackSet as W
 
 main :: IO ()

@@ -926,13 +926,13 @@ static void server_new_xdg_popup(struct wl_listener *listener, void *data) {
 
 /* ------------------------------------------------------------------------- */
 
-static void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *surface) {
+void layer_surface_focus(struct wxyz_layer_surface *surface) {
     if (!surface) { return; }
 
-    struct wlr_seat *seat = server->seat;
+    struct wlr_seat *seat = surface->server->seat;
     struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
 
-    if (prev_surface == surface) { return; }
+    if (prev_surface == surface->layer_surface->surface) { return; }
     if (prev_surface) {
         // Deactivate the previously focused surface if it's a toplevel.
         struct wlr_xdg_toplevel *prev_toplevel =
@@ -945,7 +945,8 @@ static void layer_surface_focus(struct wxyz_server *server, struct wlr_surface *
     /* Activate the new surface */
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
     if (keyboard) {
-        wlr_seat_keyboard_notify_enter(seat, surface, keyboard->keycodes,
+        wlr_seat_keyboard_notify_enter(seat, surface->layer_surface->surface,
+                                       keyboard->keycodes,
                                        keyboard->num_keycodes,
                                        &keyboard->modifiers);
     }
@@ -976,7 +977,7 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
                                   wlr_layer_surface->current.desired_width,
                                   wlr_layer_surface->current.desired_height);
 
-   layer_surface_focus(wxyz_surface->server, wlr_layer_surface->surface);
+   layer_surface_focus(wxyz_surface);
 }
 
 void wxyz_layer_surface_set_position(struct wxyz_layer_surface* surface, int x, int y) {

@@ -58,8 +58,6 @@ newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 newtype ScreenDetail = SD { screenRect :: Rectangle }
     deriving (Eq,Show, Read)
 
-type LayerSurface = Ptr CLayerSurface
-
 ---------------------------
 -- Our window manager monad
 
@@ -232,7 +230,6 @@ instance Message LayoutMessages
 -- | Run a monadic action with the current stack set
 withWindowSet :: (WindowSet -> WXYZ a) -> WXYZ a
 withWindowSet f = gets windowset >>= f
-
 
 -- ---------------------------------------------------------------------
 -- General utilities

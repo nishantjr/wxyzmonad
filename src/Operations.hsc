@@ -19,8 +19,10 @@ import           Control.Monad.State
 import           Data.Maybe
 import           Data.Monoid (Any(..))
 import qualified Data.Map as M
+import           Foreign.Ptr
 import qualified System.Process as P
 
+import           Event
 import qualified StackSet as W
 import           WXYZMonad
 import           Tiling (Full(..))
@@ -134,15 +136,16 @@ scaleRationalRect (Rectangle sx sy sw sh) (W.RationalRect rx ry rw rh)
 
 
 foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_position"
-    _wxyz_toplevel_set_position :: Window -> Position -> Position -> IO ()
+    _wxyz_toplevel_set_position :: Ptr CXdgTopLevel -> Position -> Position -> IO ()
 foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_size"
-    _wxyz_toplevel_set_size :: Window -> Dimension -> Dimension -> IO ()
+    _wxyz_toplevel_set_size :: Ptr CXdgTopLevel -> Dimension -> Dimension -> IO ()
 
 moveResizeWindow :: Window -> Position -> Position -> Dimension -> Dimension -> IO ()
-moveResizeWindow win x y w h
-     = do _wxyz_toplevel_set_position win x y
-          _wxyz_toplevel_set_size win w h
-
+moveResizeWindow (TopLevel ptr) x y w h
+     = do _wxyz_toplevel_set_position ptr x y
+          _wxyz_toplevel_set_size ptr w h
+moveResizeWindow (LayerSurface _ptr _layer) _x _y _w _h
+     = undefined
 
 -- ---------------------------------------------------------------------
 -- Setting keyboard focus
@@ -152,9 +155,10 @@ setTopFocus :: WXYZ ()
 setTopFocus = withWindowSet $ maybe (pure ()) focusTopLevel . W.peek
 
 foreign import capi "clib.h focus_toplevel"
-    _focus_toplevel :: Window -> IO ()
+    _focus_toplevel :: Ptr CXdgTopLevel -> IO ()
 focusTopLevel :: Window -> WXYZ ()
-focusTopLevel w = liftIO $ _focus_toplevel w
+focusTopLevel (TopLevel w) = liftIO $ _focus_toplevel w
+focusTopLevel _ = error "Not implemented"
 
 
 ------------------------------------------------------------------------

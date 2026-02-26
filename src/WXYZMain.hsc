@@ -16,12 +16,15 @@ import           Operations
 import           StackSet hiding (modify)
 import           WXYZMonad
 
+-- Main Loop
+------------
+
 foreign import capi "wlr/types/wlr_seat.h wlr_seat_keyboard_notify_key"
     _wlr_seat_keyboard_notify_key :: Ptr Seat -> Word32 -> KeyCode -> WLKeyboardKeyState -> IO ()
 foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_position"
-    _wxyz_toplevel_set_position :: Ptr XdgTopLevel -> Position -> Position -> IO ()
+    _wxyz_toplevel_set_position :: Ptr CXdgTopLevel -> Position -> Position -> IO ()
 foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_size"
-    _wxyz_toplevel_set_size :: Ptr XdgTopLevel -> Dimension -> Dimension -> IO ()
+    _wxyz_toplevel_set_size :: Ptr CXdgTopLevel -> Dimension -> Dimension -> IO ()
 
 handle_event :: Event -> WXYZ ()
 handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
@@ -33,12 +36,12 @@ handle_event (KeyPressEvent time_msec keycode st keysym modifiers seat)
 
 handle_event (XdgTopLevelMapEvent win)
     = do st <- get
-         put $ st{ windowset = insertUp win (windowset st) }
+         put $ st{ windowset = insertUp (TopLevel win) (windowset st) }
          refresh
 
 handle_event (XdgTopLevelUnmapEvent win)
     = do st <- get
-         put $ st{ windowset = StackSet.delete win (windowset st) }
+         put $ st{ windowset = StackSet.delete (TopLevel win) (windowset st) }
          refresh
 
 -- TODO: This is a hack: We just update the size of the current screen,

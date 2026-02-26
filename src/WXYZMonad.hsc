@@ -10,7 +10,7 @@ module WXYZMonad
     , Message
     , Position
     , Rectangle(..)
-    , Window
+    , Window(..)
     , WindowSet
     , LayoutMessages(..)
     , ScreenDetail(..)
@@ -34,7 +34,6 @@ import           Data.Int
 import qualified Data.Map as M
 import           Data.Typeable
 import           Data.Word
-import           Foreign.C.Types
 import           Foreign.Ptr
 import           System.Exit (ExitCode)
 import           System.IO (hPrint, stderr)
@@ -59,8 +58,14 @@ data Rectangle = Rectangle {
         }
     deriving (Eq,Show,Read)
 
-type Window     = Ptr XdgTopLevel
-type WindowSet  = StackSet WorkspaceId (Layout Window) Window ScreenId ScreenDetail
+
+data Layer = Background | Bottom | Top | Overlay
+    deriving (Eq, Ord)
+data Window = TopLevel (Ptr CXdgTopLevel)
+            | LayerSurface (Ptr CLayerSurface) Layer
+    deriving (Eq, Ord)
+
+type WindowSet = StackSet WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window
 
 -- | Virtual workspace indices
@@ -73,6 +78,7 @@ newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 newtype ScreenDetail = SD { screenRect :: Rectangle }
     deriving (Eq,Show, Read)
 
+type LayerSurface = Ptr CLayerSurface
 
 ---------------------------
 -- Our window manager monad
@@ -202,7 +208,7 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     description :: layout a -> String
     description      = show
 
-instance LayoutClass Layout Window where
+instance LayoutClass Layout a where
     runLayout (Workspace i (Layout l) ms) r = fmap (fmap Layout) `fmap` runLayout (Workspace i l ms) r
     doLayout (Layout l) r s  = fmap (fmap Layout) `fmap` doLayout l r s
     emptyLayout (Layout l) r = fmap (fmap Layout) `fmap` emptyLayout l r

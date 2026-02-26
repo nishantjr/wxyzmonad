@@ -979,6 +979,14 @@ void layer_surface_map(struct wl_listener *listener, void *data) {
    layer_surface_focus(wxyz_surface->server, wlr_layer_surface->surface);
 }
 
+void wxyz_layer_surface_set_position(struct wxyz_layer_surface* surface, int x, int y) {
+    wlr_scene_node_set_position(&surface->scene_tree->tree->node, x, y);
+}
+
+void wxyz_layer_surface_set_size(struct wxyz_layer_surface *surface, int width, int height) {
+   wlr_layer_surface_v1_configure(surface->layer_surface, width, height);
+}
+
 void layer_surface_unmap(struct wl_listener *listener, void *data) {
     struct wxyz_layer_surface *toplevel =
         wl_container_of(listener, toplevel, unmap);

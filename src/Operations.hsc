@@ -140,12 +140,22 @@ foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_position"
 foreign import capi "wlr/types/wlr_seat.h wxyz_toplevel_set_size"
     _wxyz_toplevel_set_size :: Ptr CXdgTopLevel -> Dimension -> Dimension -> IO ()
 
+foreign import capi "wlr/types/wlr_seat.h wxyz_layer_surface_set_position"
+    _wxyz_layer_surface_set_position :: Ptr CLayerSurface -> Position -> Position -> IO ()
+foreign import capi "wlr/types/wlr_seat.h wxyz_layer_surface_set_size"
+    _wxyz_layer_surface_set_size :: Ptr CLayerSurface -> Dimension -> Dimension -> IO ()
+
 moveResizeWindow :: Window -> Position -> Position -> Dimension -> Dimension -> IO ()
 moveResizeWindow (TopLevel ptr) x y w h
      = do _wxyz_toplevel_set_position ptr x y
           _wxyz_toplevel_set_size ptr w h
-moveResizeWindow (LayerSurface _ptr _layer) _x _y _w _h
-     = undefined
+moveResizeWindow (LayerSurface ptr _layer) x y w h
+     = do _wxyz_layer_surface_set_position ptr x y
+          _wxyz_layer_surface_set_size ptr w h
+          -- TODO: How do we make this atomic to avoid a flicker?
+          -- position information is local to the compositor, but
+          -- the size needs a roundtrip to the client.
+
 
 -- ---------------------------------------------------------------------
 -- Setting keyboard focus

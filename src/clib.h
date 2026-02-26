@@ -5,10 +5,12 @@
 #endif
 
 #include <wlr/types/wlr_keyboard.h>
+#include "wlr-layer-shell-unstable-v1-protocol.h"
 
 struct wlr_seat;
-struct wxyz_toplevel;
 struct wxyz_output;
+struct wxyz_toplevel;
+struct wxyz_layer_surface;
 
 struct wxyz_keyboard_key_event {
     struct wlr_keyboard_key_event event;
@@ -61,3 +63,5 @@ void focus_toplevel(struct wxyz_toplevel *toplevel);
 void wxyz_toplevel_set_position(struct wxyz_toplevel*, int x, int y);
 void wxyz_toplevel_set_size(struct wxyz_toplevel*, int width, int height);
 
+void wxyz_layer_surface_set_size(struct wxyz_layer_surface *surface, int width, int height);
+void wxyz_layer_surface_set_position(struct wxyz_layer_surface *surface, int width, int height);

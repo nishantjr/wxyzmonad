@@ -149,7 +149,7 @@ moveResizeWindow :: Window -> Position -> Position -> Dimension -> Dimension -> 
 moveResizeWindow (TopLevel ptr) x y w h
      = do _wxyz_toplevel_set_position ptr x y
           _wxyz_toplevel_set_size ptr w h
-moveResizeWindow (LayerSurface ptr _layer) x y w h
+moveResizeWindow (LayerSurface ptr) x y w h
      = do _wxyz_layer_surface_set_position ptr x y
           _wxyz_layer_surface_set_size ptr w h
           -- TODO: How do we make this atomic to avoid a flicker?

@@ -40,7 +40,7 @@ data Rectangle = Rectangle {
 data Layer = Background | Bottom | Top | Overlay
     deriving (Eq, Ord, Show)
 data Window = TopLevel (Ptr CXdgTopLevel)
-            | LayerSurface (Ptr CLayerSurface) Layer
+            | LayerSurface (Ptr CLayerSurface)
     deriving (Eq, Ord, Show)
 
 data CXdgTopLevel

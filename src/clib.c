@@ -954,30 +954,30 @@ void layer_surface_focus(struct wxyz_layer_surface *surface) {
 
 
 static void layer_surface_map(struct wl_listener *listener, void *data) {
-   struct wxyz_layer_surface *wxyz_surface =
-       wl_container_of(listener, wxyz_surface, map);
-   struct wlr_layer_surface_v1 *wlr_layer_surface = wxyz_surface->layer_surface;
+    struct wxyz_layer_surface *wxyz_surface =
+        wl_container_of(listener, wxyz_surface, map);
+    struct wlr_layer_surface_v1 *wlr_layer_surface = wxyz_surface->layer_surface;
 
-   // Get output dimensions
-   int width = wlr_layer_surface->output->width;
-   int height = wlr_layer_surface->output->height;
+    // Get output dimensions
+    int width = wlr_layer_surface->output->width;
+    int height = wlr_layer_surface->output->height;
 
-   // Ensure dimensions are valid
-   if (wlr_layer_surface->current.desired_width <= 0
-            || wlr_layer_surface->current.desired_width > width) {
-       wlr_layer_surface->current.desired_width = width / 2;
-   }
-   if (wlr_layer_surface->current.desired_height <= 0 ||
-       wlr_layer_surface->current.desired_height > height) {
-     wlr_layer_surface->current.desired_height = 25;
-   }
+    // Ensure dimensions are valid
+    if (wlr_layer_surface->current.desired_width <= 0
+             || wlr_layer_surface->current.desired_width > width) {
+        wlr_layer_surface->current.desired_width = width / 2;
+    }
+    if (wlr_layer_surface->current.desired_height <= 0 ||
+        wlr_layer_surface->current.desired_height > height) {
+      wlr_layer_surface->current.desired_height = 25;
+    }
 
-   // Configure surface with validated dimensions
-   wlr_layer_surface_v1_configure(wlr_layer_surface,
-                                  wlr_layer_surface->current.desired_width,
-                                  wlr_layer_surface->current.desired_height);
+    // Configure surface with validated dimensions
+    wlr_layer_surface_v1_configure(wlr_layer_surface,
+                                   wlr_layer_surface->current.desired_width,
+                                   wlr_layer_surface->current.desired_height);
 
-   layer_surface_focus(wxyz_surface);
+    layer_surface_focus(wxyz_surface);
 }
 
 void wxyz_layer_surface_set_position(struct wxyz_layer_surface* surface, int x, int y) {
@@ -985,7 +985,7 @@ void wxyz_layer_surface_set_position(struct wxyz_layer_surface* surface, int x, 
 }
 
 void wxyz_layer_surface_set_size(struct wxyz_layer_surface *surface, int width, int height) {
-   wlr_layer_surface_v1_configure(surface->layer_surface, width, height);
+    wlr_layer_surface_v1_configure(surface->layer_surface, width, height);
 }
 
 static void layer_surface_unmap(struct wl_listener *listener, void *data) {
@@ -995,22 +995,22 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
 }
 
 static void layer_surface_configure(struct wl_listener *listener, void *data) {
-  struct wxyz_layer_surface *layer_surface =
-      wl_container_of(listener, layer_surface, configure);
-  struct wlr_layer_surface_v1 *wlr_layer_surface = layer_surface->layer_surface;
-  struct wlr_output *output = wlr_layer_surface->output;
+    struct wxyz_layer_surface *layer_surface =
+        wl_container_of(listener, layer_surface, configure);
+    struct wlr_layer_surface_v1 *wlr_layer_surface = layer_surface->layer_surface;
+    struct wlr_output *output = wlr_layer_surface->output;
 
-  if (!output) {
-    return;
-  }
+    if (!output) {
+      return;
+    }
 
-  uint32_t width = wlr_layer_surface->current.desired_width;
-  uint32_t height = wlr_layer_surface->current.desired_height;
+    uint32_t width = wlr_layer_surface->current.desired_width;
+    uint32_t height = wlr_layer_surface->current.desired_height;
 
-  // Calculate width/height if they're set to zero
-  if (width == 0) { width = 10; }
-  if (height == 0) { height = 10; }
-  wlr_layer_surface_v1_configure(wlr_layer_surface, width, height);
+    // Calculate width/height if they're set to zero
+    if (width == 0) { width = 10; }
+    if (height == 0) { height = 10; }
+    wlr_layer_surface_v1_configure(wlr_layer_surface, width, height);
 }
 
 static void wxyz_layer_surface_destroy(struct wl_listener *listener, void *data) {

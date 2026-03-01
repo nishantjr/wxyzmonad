@@ -989,8 +989,8 @@ void wxyz_layer_surface_set_size(struct wxyz_layer_surface *surface, int width, 
 }
 
 static void layer_surface_unmap(struct wl_listener *listener, void *data) {
-    struct wxyz_layer_surface *toplevel =
-        wl_container_of(listener, toplevel, unmap);
+    struct wxyz_layer_surface *wxyz_surface =
+        wl_container_of(listener, wxyz_surface, unmap);
     wlr_log(WLR_DEBUG, "Layer surface unmapped");
 }
 

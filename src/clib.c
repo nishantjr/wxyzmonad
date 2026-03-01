@@ -995,9 +995,9 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
 }
 
 static void layer_surface_configure(struct wl_listener *listener, void *data) {
-    struct wxyz_layer_surface *layer_surface =
-        wl_container_of(listener, layer_surface, configure);
-    struct wlr_layer_surface_v1 *wlr_layer_surface = layer_surface->layer_surface;
+    struct wxyz_layer_surface *wxyz_surface =
+        wl_container_of(listener, wxyz_surface, configure);
+    struct wlr_layer_surface_v1 *wlr_layer_surface = wxyz_surface->layer_surface;
     struct wlr_output *output = wlr_layer_surface->output;
 
     if (!output) {

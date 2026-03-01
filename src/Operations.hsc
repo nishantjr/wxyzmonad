@@ -162,13 +162,15 @@ moveResizeWindow (LayerSurface ptr) x y w h
 
 -- | Set the focus to the window on top of the stack, or root
 setTopFocus :: WXYZ ()
-setTopFocus = withWindowSet $ maybe (pure ()) focusTopLevel . W.peek
+setTopFocus = withWindowSet $ maybe (pure ()) focusWindow . W.peek
 
 foreign import capi "clib.h focus_toplevel"
     _focus_toplevel :: Ptr CXdgTopLevel -> IO ()
-focusTopLevel :: Window -> WXYZ ()
-focusTopLevel (TopLevel w) = liftIO $ _focus_toplevel w
-focusTopLevel _ = error "Not implemented"
+foreign import capi "clib.h layer_surface_focus"
+    _layer_surface_focus :: Ptr CLayerSurface -> IO ()
+focusWindow :: Window -> WXYZ ()
+focusWindow (TopLevel w) = liftIO $ _focus_toplevel w
+focusWindow (LayerSurface w) = liftIO $ _layer_surface_focus w
 
 
 ------------------------------------------------------------------------

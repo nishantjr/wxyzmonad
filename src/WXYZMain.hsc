@@ -44,6 +44,21 @@ handle_event (XdgTopLevelUnmapEvent win)
          put $ st{ windowset = StackSet.delete (TopLevel win) (windowset st) }
          refresh
 
+handle_event (LayerSurfaceNew _) = pure ()
+handle_event (LayerSurfaceCommit _) = refresh
+handle_event (LayerSurfaceMap surface)
+    = do st <- get
+         put $ st { windowset = insertUp (LayerSurface surface) (windowset st) }
+         refresh
+handle_event (LayerSurfaceUnmap surface)
+    = do st <- get
+         put $ st { windowset = StackSet.delete (LayerSurface surface) (windowset st) }
+         refresh
+handle_event (LayerSurfaceDestroy surface)
+    = do st <- get
+         put $ st { windowset = StackSet.delete (LayerSurface surface) (windowset st) }
+         refresh
+ 
 -- TODO: This is a hack: We just update the size of the current screen,
 -- and re-layout. This is a work-around for incorrectly structured
 -- StackSet.

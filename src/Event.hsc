@@ -8,6 +8,7 @@ module Event
 
     , WLKeyboardKeyState, state_Pressed
     , Window(..), Rectangle(..), Dimension, Position, Layer(..)
+    , layerSurfaceGetLayer
     , next_event
     )
     where
@@ -42,6 +43,18 @@ data Layer = Background | Bottom | Top | Overlay
 data Window = TopLevel (Ptr CXdgTopLevel)
             | LayerSurface (Ptr CLayerSurface)
     deriving (Eq, Ord, Show)
+
+foreign import capi "clib.h wxyz_layer_surface_get_layer"
+    _wxyz_layer_surface_get_layer  :: Ptr CLayerSurface -> IO Word8
+layerSurfaceGetLayer :: Ptr CLayerSurface -> IO Layer
+layerSurfaceGetLayer p = do
+    l <- _wxyz_layer_surface_get_layer p
+    case l of
+        #{const ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND} -> pure Background
+        #{const ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM}     -> pure Bottom
+        #{const ZWLR_LAYER_SHELL_V1_LAYER_TOP}        -> pure Top
+        #{const ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY}    -> pure Overlay
+        _                                             -> error "Unknown layer"
 
 data CXdgTopLevel
 data CLayerSurface
@@ -83,9 +96,10 @@ next_event =
      if (ptr == nullPtr)
      then pure Nothing
      else do ty <- #{peek struct wxyz_event, type} ptr
-             res <- unparse ty ptr
+             unparsed <- unparse ty ptr
              free ptr
-             pure res
+             print unparsed
+             pure unparsed
   where
     unparse :: Word8 -> Ptr Event -> IO (Maybe Event)
     unparse #{const KEYBOARD_KEY} ptr
@@ -96,6 +110,7 @@ next_event =
              modifiers  <- (#{peek struct wxyz_event, keyboard_key.modifiers}     ptr)
              seat       <- (#{peek struct wxyz_event, keyboard_key.seat}          ptr)
              pure $ Just (KeyPressEvent time_msec keycode st keysym modifiers seat)
+
     unparse #{const XDG_TOPLEVEL_MAP} ptr
         = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_map.toplevel} ptr)
              pure $ Just (XdgTopLevelMapEvent toplevel)

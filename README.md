@@ -33,7 +33,11 @@ This means that:
 
     There are also somethings that I don't think make sense to be include in
     the core monad, e.g. workspaces could easily be implemented as a layout,
-    allowing different implementations.
+    allowing different implementations, for example:
+
+        - with a "tag" based implementation, a la DWM
+        - workspaces that span monitors
+        - workspaces are per monitor.
 
 Building
 ========
@@ -70,8 +74,8 @@ Cleanup
 - [ ] Fix StackSet to reflect Wayland.
 
   Since Wayland has *real* multi-outputs, floating windows must be
-  associated with an output. We must also handle the case where
-  there are no screens.
+  associated with an output, rather than floating in the ether somewhere.
+  We must also handle the case where there are no screens.
 
   It may also make sense to move Workspaces out of core functionality
   and handle them elsewhere as well. This could allow us to, for example

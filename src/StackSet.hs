@@ -40,7 +40,7 @@ module StackSet (
         tagMember, renameTag, ensureTags, member, findTag, mapWorkspace, mapLayout,
         -- * Modifying the stackset
         -- $modifyStackset
-        insertUp, delete, delete', filter,
+        insertUp, delete, delete', filter, filterM,
         -- * Setting the master window
         -- $settingMW
         swapUp, swapDown, swapMaster, shiftMaster, modify, modify', float, sink, -- needed by users
@@ -52,15 +52,16 @@ module StackSet (
         abort
     ) where
 
-import Prelude hiding (filter)
-import Control.Applicative.Backwards (Backwards (Backwards, forwards))
-import Data.Foldable (toList)
-import Data.Maybe   (listToMaybe,isJust,fromMaybe)
+import           Prelude hiding (filter)
+import           Control.Applicative.Backwards (Backwards (Backwards, forwards))
+import qualified Control.Monad as M
+import           Data.Foldable (toList)
+import           Data.Maybe   (listToMaybe,isJust,fromMaybe)
 import qualified Data.List as L (deleteBy,find,splitAt,filter,nub)
-import Data.List ( (\\) )
+import           Data.List ( (\\) )
 import qualified Data.List.NonEmpty as NE
-import Data.List.NonEmpty (NonEmpty((:|)))
-import qualified Data.Map  as M (Map,insert,delete,empty)
+import           Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.Map as M (Map,insert,delete,empty)
 
 -- $intro
 --
@@ -340,6 +341,17 @@ filter p (Stack f ls rs) = case L.filter p (f:rs) of
     []     -> case L.filter p ls of                  -- filter back up
                     f':ls' -> Just $ Stack f' ls' [] -- else up
                     []     -> Nothing
+
+filterM :: Monad m => (a -> m Bool) -> Stack a -> m (Maybe (Stack a))
+filterM p (Stack f ls rs) = do
+    filteredFRs <- M.filterM p (f:rs)
+    filteredLs  <- M.filterM p ls
+    case filteredFRs of
+      f':rs' -> pure $ Just $ Stack f' filteredLs rs'    -- maybe move focus down
+      []     -> case filteredLs of                  -- filter back up
+                    f':ls' -> pure $ Just $ Stack f' ls' [] -- else up
+                    []     -> pure $ Nothing
+
 
 -- |
 -- /O(s)/. Extract the stack on the current workspace, as a list.

@@ -11,12 +11,20 @@ import           Tiling
 import           WXYZMonad
 import           WXYZMain
 import qualified StackSet as W
+import           Layout.PerLayer
 
 main :: IO ()
 main = wxyz $
         Config { keyBindings
                , startupHook = shell "alacritty"
-               , layoutHook = Layout tiled
+               , layoutHook = Layout $
+                   PerLayer {
+                        background = Full,       -- swaybg
+                        bottom     = Full,       -- ?? Panels, launchers?
+                        toplevels  = tiled,      -- Ordinary applications
+                        top        = Full,       -- Waybar?
+                        overlay    = Full        -- Notifications?
+                   }
                , workspaces = ["first", "second", "third"]
                }
   where

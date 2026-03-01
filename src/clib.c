@@ -172,8 +172,6 @@ struct wxyz_event* wxyz_next_event()
     return NULL;
 }
 
-
-
 void wxyz_toplevel_set_position(struct wxyz_toplevel* toplevel, int x, int y) {
     wlr_scene_node_set_position(&toplevel->scene_tree->node, x, y);
 }
@@ -1012,10 +1010,6 @@ static void layer_surface_commit(struct wl_listener *listener, void *data) {
     struct wlr_layer_surface_v1 *wlr_layer_surface = wxyz_surface->layer_surface;
     struct wlr_output *output = wlr_layer_surface->output;
 
-    if (!output) {
-      return;
-    }
-
     uint32_t width = wlr_layer_surface->current.desired_width;
     uint32_t height = wlr_layer_surface->current.desired_height;
 
@@ -1023,6 +1017,10 @@ static void layer_surface_commit(struct wl_listener *listener, void *data) {
     if (width == 0) { width = 10; }
     if (height == 0) { height = 10; }
     wlr_layer_surface_v1_configure(wlr_layer_surface, width, height);
+
+    if (!output) {
+      return;
+    }
 
     struct wxyz_event* wx_event = wxyz_new_event();
     wx_event->type = LAYER_SURFACE_COMMIT;

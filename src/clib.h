@@ -28,6 +28,8 @@ struct wxyz_layer_surface_commit_event  { struct wxyz_layer_surface* surface; };
 struct wxyz_layer_surface_map_event     { struct wxyz_layer_surface* surface; };
 struct wxyz_layer_surface_unmap_event   { struct wxyz_layer_surface* surface; };
 
+enum zwlr_layer_shell_v1_layer wxyz_layer_surface_get_layer(struct wxyz_layer_surface*);
+
 struct wxyz_output_new_event            { struct wxyz_output* output;
                                           int32_t width;
                                           int32_t height;
@@ -77,12 +79,12 @@ struct wxyz_event* wxyz_next_event();
 int wxyz_init();
 void wxyz_run();
 void wxyz_shutdown();
-
 void wxyz_terminate();
-void focus_toplevel(struct wxyz_toplevel *toplevel);
 
+void focus_toplevel(struct wxyz_toplevel *toplevel);
 void wxyz_toplevel_set_position(struct wxyz_toplevel*, int x, int y);
 void wxyz_toplevel_set_size(struct wxyz_toplevel*, int width, int height);
 
+void layer_surface_focus(struct wxyz_layer_surface *surface);
 void wxyz_layer_surface_set_size(struct wxyz_layer_surface *surface, int width, int height);
 void wxyz_layer_surface_set_position(struct wxyz_layer_surface *surface, int width, int height);

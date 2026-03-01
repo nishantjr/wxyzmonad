@@ -3,6 +3,7 @@ module Key
     , KeyCode
     , Modifier
 
+    , xkb_key_b
     , xkb_key_d
     , xkb_key_h
     , xkb_key_j
@@ -26,6 +27,8 @@ wlr_modifier_alt = #const WLR_MODIFIER_ALT
 type KeyCode = Word32
 type KeySym = Word32
 
+xkb_key_b :: KeySym
+xkb_key_b = #const XKB_KEY_b
 xkb_key_d :: KeySym
 xkb_key_d = #const XKB_KEY_d
 xkb_key_h :: KeySym

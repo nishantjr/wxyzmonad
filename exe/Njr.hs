@@ -24,17 +24,19 @@ main = wxyz $
         [ ((modMask, xkb_key_q),      terminate)
         , ((modMask, xkb_key_t),      shell "alacritty")
         , ((modMask, xkb_key_d),      shell "bemenu-run")
+        , ((modMask, xkb_key_b),      shell "swaybg -c ffffff") -- Swaybg doesn't work currently
         , ((modMask, xkb_key_h),      hello)
         , ((modMask, xkb_key_tab),    next_toplevel)
 
         -- move focus up or down the window stack
+        , ((modMask, xkb_key_h),      sendMessage Shrink)       -- %! Shrink the master area
         , ((modMask, xkb_key_j),      windows W.focusDown)      -- %! Move focus to the next window
         , ((modMask, xkb_key_k),      windows W.focusUp)        -- %! Move focus to the previous window
+        , ((modMask, xkb_key_l),      sendMessage Expand)       -- %! Expand the master area
+
         , ((modMask, xkb_key_m),      windows W.focusMaster  )  -- %! Move focus to the master window
 
         -- resizing the master/slave ratio
-        , ((modMask, xkb_key_h),      sendMessage Shrink) -- %! Shrink the master area
-        , ((modMask, xkb_key_l),      sendMessage Expand) -- %! Expand the master area
         ]
     modMask = wlr_modifier_alt
     tiled   = Tall nmaster delta ratio

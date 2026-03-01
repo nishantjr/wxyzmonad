@@ -57,8 +57,16 @@ data Event = KeyPressEvent {
                                  -- it will be available after the current event is handled.
                                  -- Needed to pass to wlr_seat_keyboard_notify_key
              }
+
+           | LayerSurfaceNew { surface :: Ptr CLayerSurface }
+           | LayerSurfaceDestroy { surface :: Ptr CLayerSurface }
+           | LayerSurfaceCommit { surface :: Ptr CLayerSurface }
+           | LayerSurfaceMap { surface :: Ptr CLayerSurface }
+           | LayerSurfaceUnmap { surface :: Ptr CLayerSurface }
+
            | XdgTopLevelMapEvent { toplevel :: Ptr CXdgTopLevel }
            | XdgTopLevelUnmapEvent  { toplevel :: Ptr CXdgTopLevel }
+
            | OutputNewEvent {
                output :: Ptr COutput,
                width :: Int32,
@@ -94,6 +102,23 @@ next_event =
     unparse #{const XDG_TOPLEVEL_UNMAP} ptr
         = do toplevel <- (#{peek struct wxyz_event, xdg_toplevel_unmap.toplevel} ptr)
              pure $ Just (XdgTopLevelUnmapEvent toplevel)
+
+    unparse #{const LAYER_SURFACE_NEW} ptr
+        = do toplevel <- (#{peek struct wxyz_event, layer_surface_new.surface} ptr)
+             pure $ Just (LayerSurfaceNew toplevel)
+    unparse #{const LAYER_SURFACE_DESTROY} ptr
+        = do toplevel <- (#{peek struct wxyz_event, layer_surface_destroy.surface} ptr)
+             pure $ Just (LayerSurfaceDestroy toplevel)
+    unparse #{const LAYER_SURFACE_MAP} ptr
+        = do toplevel <- (#{peek struct wxyz_event, layer_surface_map.surface} ptr)
+             pure $ Just (LayerSurfaceMap toplevel)
+    unparse #{const LAYER_SURFACE_UNMAP} ptr
+        = do toplevel <- (#{peek struct wxyz_event, layer_surface_unmap.surface} ptr)
+             pure $ Just (LayerSurfaceUnmap toplevel)
+    unparse #{const LAYER_SURFACE_COMMIT} ptr
+        = do toplevel <- (#{peek struct wxyz_event, layer_surface_commit.surface} ptr)
+             pure $ Just (LayerSurfaceCommit toplevel)
+
     unparse #{const OUTPUT_NEW} ptr
         = do output <- (#{peek struct wxyz_event, output_new.output} ptr)
              height <- (#{peek struct wxyz_event, output_new.height} ptr)

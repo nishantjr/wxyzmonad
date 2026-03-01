@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+die() {
+    echo "Error:" "$@"
+    exit 1
+}
+
 build_dir=.build/
 protocol_dir="$build_dir/protocols"
 
@@ -10,9 +15,12 @@ make_protocol_headers() {
     # for Wayland protocols, which are specified in XML. wlroots requires
     # you to rig these up to your build system yourself and provide them
     # in the include path.
-    scanner=$(pkg-config --variable=wayland_scanner wayland-scanner)
-    wl_protocols_xml=$(pkg-config --variable=pkgdatadir wayland-protocols)
-    wlr_protocols_xml=$(pkg-config --variable=pkgdatadir wlr-protocols)
+    scanner=$(pkg-config --variable=wayland_scanner wayland-scanner) || \
+        die "wayland-scanner not found"
+    wl_protocols_xml=$(pkg-config --variable=pkgdatadir wayland-protocols) || \
+        die "wayland-protocols not found"
+    wlr_protocols_xml=$(pkg-config --variable=pkgdatadir wlr-protocols) || \
+        die "wlr-protocols not found"
 
     mkdir -p "$protocol_dir"
     xdg_shell_h="$protocol_dir/xdg-shell-protocol.h"

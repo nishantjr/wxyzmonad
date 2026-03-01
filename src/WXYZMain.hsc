@@ -58,7 +58,7 @@ handle_event (OutputNewEvent _output width height)
          refresh
     where coerce n = fromIntegral n
 
-handle_event e@(OutputDestroyEvent _output)
+handle_event e
     = io $ putStrLn $ "unhandled event: " ++ (show e)
 
 main_loop :: WXYZ ()

@@ -22,6 +22,12 @@ struct wxyz_keyboard_key_event {
 struct wxyz_xdg_toplevel_map_event      { struct wxyz_toplevel* toplevel; };
 struct wxyz_xdg_toplevel_unmap_event    { struct wxyz_toplevel* toplevel; };
 
+struct wxyz_layer_surface_new_event     { struct wxyz_layer_surface* surface; };
+struct wxyz_layer_surface_destroy_event { struct wxyz_layer_surface* surface; };
+struct wxyz_layer_surface_commit_event  { struct wxyz_layer_surface* surface; };
+struct wxyz_layer_surface_map_event     { struct wxyz_layer_surface* surface; };
+struct wxyz_layer_surface_unmap_event   { struct wxyz_layer_surface* surface; };
+
 struct wxyz_output_new_event            { struct wxyz_output* output;
                                           int32_t width;
                                           int32_t height;
@@ -31,8 +37,16 @@ typedef struct wxyz_output_new_event    wxyz_output_request_state_event; // alia
 
 enum wxyz_event_type {
     KEYBOARD_KEY = 1,
+
     XDG_TOPLEVEL_MAP,
     XDG_TOPLEVEL_UNMAP,
+
+    LAYER_SURFACE_NEW,
+    LAYER_SURFACE_DESTROY,
+    LAYER_SURFACE_COMMIT,
+    LAYER_SURFACE_MAP,
+    LAYER_SURFACE_UNMAP,
+
     OUTPUT_NEW,
     OUTPUT_DESTROY,
     OUTPUT_REQUEST_STATE,
@@ -42,8 +56,15 @@ struct wxyz_event {
     enum wxyz_event_type type;
     union {
         struct wxyz_keyboard_key_event          keyboard_key;
+
         struct wxyz_xdg_toplevel_map_event      xdg_toplevel_map;
         struct wxyz_xdg_toplevel_unmap_event    xdg_toplevel_unmap;
+
+        struct wxyz_layer_surface_new_event     layer_surface_new;
+        struct wxyz_layer_surface_destroy_event layer_surface_destroy;
+        struct wxyz_layer_surface_commit_event  layer_surface_commit;
+        struct wxyz_layer_surface_map_event     layer_surface_map;
+        struct wxyz_layer_surface_unmap_event   layer_surface_unmap;
 
         struct wxyz_output_new_event            output_new;
         struct wxyz_output_destroy_event        output_destroy;

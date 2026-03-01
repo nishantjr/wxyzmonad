@@ -978,6 +978,10 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
                                    wlr_layer_surface->current.desired_height);
 
     layer_surface_focus(wxyz_surface);
+
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = LAYER_SURFACE_MAP;
+    wx_event->layer_surface_map.surface = wxyz_surface;
 }
 
 void wxyz_layer_surface_set_position(struct wxyz_layer_surface* surface, int x, int y) {
@@ -988,10 +992,18 @@ void wxyz_layer_surface_set_size(struct wxyz_layer_surface *surface, int width, 
     wlr_layer_surface_v1_configure(surface->layer_surface, width, height);
 }
 
+enum zwlr_layer_shell_v1_layer wxyz_layer_surface_get_layer(struct wxyz_layer_surface* surface) {
+    return surface->layer_surface->current.layer;
+}
+
 static void layer_surface_unmap(struct wl_listener *listener, void *data) {
     struct wxyz_layer_surface *wxyz_surface =
         wl_container_of(listener, wxyz_surface, unmap);
     wlr_log(WLR_DEBUG, "Layer surface unmapped");
+
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = LAYER_SURFACE_UNMAP;
+    wx_event->layer_surface_unmap.surface = wxyz_surface;
 }
 
 static void layer_surface_commit(struct wl_listener *listener, void *data) {
@@ -1011,6 +1023,10 @@ static void layer_surface_commit(struct wl_listener *listener, void *data) {
     if (width == 0) { width = 10; }
     if (height == 0) { height = 10; }
     wlr_layer_surface_v1_configure(wlr_layer_surface, width, height);
+
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = LAYER_SURFACE_COMMIT;
+    wx_event->layer_surface_commit.surface = wxyz_surface;
 }
 
 static void wxyz_layer_surface_destroy(struct wl_listener *listener, void *data) {
@@ -1022,6 +1038,10 @@ static void wxyz_layer_surface_destroy(struct wl_listener *listener, void *data)
     wl_list_remove(&wxyz_surface->unmap.link);
     wl_list_remove(&wxyz_surface->commit.link);
     free(wxyz_surface);
+
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = LAYER_SURFACE_DESTROY;
+    wx_event->layer_surface_destroy.surface = wxyz_surface;
 }
 
 static void wxyz_new_layer_surface(struct wl_listener *listener, void *data) {
@@ -1086,6 +1106,10 @@ static void wxyz_new_layer_surface(struct wl_listener *listener, void *data) {
                   &wxyz_surface->commit);
 
     wl_list_insert(&server->layer_surfaces, &wxyz_surface->link);
+
+    struct wxyz_event* wx_event = wxyz_new_event();
+    wx_event->type = LAYER_SURFACE_NEW;
+    wx_event->layer_surface_new.surface = wxyz_surface;
 }
 
 /* ------------------------------------------------------------------------- */

@@ -119,7 +119,7 @@ struct wxyz_layer_surface {
     struct wl_listener destroy;
     struct wl_listener map;
     struct wl_listener unmap;
-    struct wl_listener configure;
+    struct wl_listener commit;
 };
 
 struct wxyz_keyboard {
@@ -994,9 +994,9 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
     wlr_log(WLR_DEBUG, "Layer surface unmapped");
 }
 
-static void layer_surface_configure(struct wl_listener *listener, void *data) {
+static void layer_surface_commit(struct wl_listener *listener, void *data) {
     struct wxyz_layer_surface *wxyz_surface =
-        wl_container_of(listener, wxyz_surface, configure);
+        wl_container_of(listener, wxyz_surface, commit);
     struct wlr_layer_surface_v1 *wlr_layer_surface = wxyz_surface->layer_surface;
     struct wlr_output *output = wlr_layer_surface->output;
 
@@ -1020,7 +1020,7 @@ static void wxyz_layer_surface_destroy(struct wl_listener *listener, void *data)
     wl_list_remove(&wxyz_surface->destroy.link);
     wl_list_remove(&wxyz_surface->map.link);
     wl_list_remove(&wxyz_surface->unmap.link);
-    wl_list_remove(&wxyz_surface->configure.link);
+    wl_list_remove(&wxyz_surface->commit.link);
     free(wxyz_surface);
 }
 
@@ -1081,11 +1081,9 @@ static void wxyz_new_layer_surface(struct wl_listener *listener, void *data) {
     wxyz_surface->unmap.notify = layer_surface_unmap;
     wl_signal_add(&wlr_surface->surface->events.unmap, &wxyz_surface->unmap);
 
-    wxyz_surface->configure.notify = layer_surface_configure;
+    wxyz_surface->commit.notify = layer_surface_commit;
     wl_signal_add(&wlr_surface->surface->events.commit,
-                  &wxyz_surface->configure); // NOT wxyz_surface->events.configure// The
-                                        // event is directly on the layer wxyz_surface/
-                                        // Changed from wxyz_surface->events.commit
+                  &wxyz_surface->commit);
 
     wl_list_insert(&server->layer_surfaces, &wxyz_surface->link);
 }

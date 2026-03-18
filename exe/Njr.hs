@@ -16,7 +16,8 @@ import           Layout.PerLayer
 main :: IO ()
 main = wxyz $
         Config { keyBindings
-               , startupHook = shell "alacritty"
+               , startupHook =
+                    shell "swaybg -i /home/njr/.config/sway/background.jpg -m fill"
                , layoutHook = Layout $
                    PerLayer {
                         background = Full,       -- swaybg
@@ -33,7 +34,6 @@ main = wxyz $
         [ ((modMask, xkb_key_q),      terminate)
         , ((modMask, xkb_key_t),      shell "alacritty")
         , ((modMask, xkb_key_d),      shell "bemenu-run")
-        , ((modMask, xkb_key_b),      shell "swaybg -c f09999")
         , ((modMask, xkb_key_h),      hello)
 
         -- move focus up or down the window stack

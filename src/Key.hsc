@@ -12,8 +12,14 @@ module Key
     , xkb_key_m
     , xkb_key_q
     , xkb_key_t
+
+    , xkb_key_1
+    , xkb_key_9
+
     , xkb_key_tab
+
     , wlr_modifier_alt
+    , wlr_modifier_shift
     ) where
 
 import           Data.Word
@@ -23,6 +29,8 @@ import           Data.Word
 type Modifier = Word32
 wlr_modifier_alt :: Modifier
 wlr_modifier_alt = #const WLR_MODIFIER_ALT
+wlr_modifier_shift :: Modifier
+wlr_modifier_shift = #const WLR_MODIFIER_SHIFT
 
 type KeyCode = Word32
 type KeySym = Word32
@@ -45,6 +53,11 @@ xkb_key_q :: KeySym
 xkb_key_q = #const XKB_KEY_q
 xkb_key_t :: KeySym
 xkb_key_t = #const XKB_KEY_t
+
+xkb_key_1 :: KeySym
+xkb_key_1 = #const XKB_KEY_1
+xkb_key_9 :: KeySym
+xkb_key_9 = #const XKB_KEY_9
 
 xkb_key_tab :: KeySym
 xkb_key_tab = #const XKB_KEY_Tab

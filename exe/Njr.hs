@@ -52,7 +52,7 @@ main = wxyz $
                         ]
         ]
     workspaces  = ["first", "second", "third"]
-    modMask     = wlr_modifier_alt
+    modMask     = wlr_modifier_logo
     shiftMask   = wlr_modifier_shift
     tiled       = Tall nmaster delta ratio
     nmaster     = 1      -- Default number of windows in the master pane

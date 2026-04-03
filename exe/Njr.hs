@@ -4,6 +4,7 @@ module Main (main)
     where
 
 import qualified Data.Map as M
+import           Data.Bits ((.|.))
 
 import           Key
 import           Operations
@@ -26,11 +27,11 @@ main = wxyz $
                         top        = Full,       -- Waybar?
                         overlay    = Full        -- Notifications?
                    }
-               , workspaces = ["first", "second", "third"]
+               , workspaces = workspaces
                }
   where
     keyBindings :: M.Map (Modifier,KeySym) (WXYZ ())
-    keyBindings = M.fromList
+    keyBindings = M.fromList $
         [ ((modMask, xkb_key_q),      terminate)
         , ((modMask, xkb_key_t),      shell "alacritty")
         , ((modMask, xkb_key_d),      shell "bemenu-run")
@@ -43,11 +44,17 @@ main = wxyz $
         , ((modMask, xkb_key_l),      sendMessage Expand)       -- %! Expand the master area
 
         , ((modMask, xkb_key_m),      windows W.focusMaster  )  -- %! Move focus to the master window
-
-        -- resizing the master/slave ratio
+        ] ++
+        [((m, k), windows $ f i)
+            | (i, k) <- zip workspaces [xkb_key_1 .. xkb_key_9]
+            , (f, m) <- [ (W.greedyView, modMask),        -- Change to Workspace
+                          (W.shift,      modMask .|. shiftMask) -- Move window to workspace
+                        ]
         ]
-    modMask = wlr_modifier_alt
-    tiled   = Tall nmaster delta ratio
-    nmaster = 1      -- Default number of windows in the master pane
-    ratio   = 1/2    -- Default proportion of screen occupied by master pane
-    delta   = 3/100  -- Percent of screen to increment by when resizing panes
+    workspaces  = ["first", "second", "third"]
+    modMask     = wlr_modifier_alt
+    shiftMask   = wlr_modifier_shift
+    tiled       = Tall nmaster delta ratio
+    nmaster     = 1      -- Default number of windows in the master pane
+    ratio       = 1/2    -- Default proportion of screen occupied by master pane
+    delta       = 3/100  -- Percent of screen to increment by when resizing panes

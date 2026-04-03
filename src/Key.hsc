@@ -20,6 +20,7 @@ module Key
 
     , wlr_modifier_alt
     , wlr_modifier_shift
+    , wlr_modifier_logo
     ) where
 
 import           Data.Word
@@ -31,6 +32,9 @@ wlr_modifier_alt :: Modifier
 wlr_modifier_alt = #const WLR_MODIFIER_ALT
 wlr_modifier_shift :: Modifier
 wlr_modifier_shift = #const WLR_MODIFIER_SHIFT
+wlr_modifier_logo :: Modifier
+wlr_modifier_logo = #const WLR_MODIFIER_LOGO
+
 
 type KeyCode = Word32
 type KeySym = Word32

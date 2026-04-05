@@ -37,13 +37,14 @@ main = wxyz $
         , ((modMask, xkb_key_d),      shell "bemenu-run")
         , ((modMask, xkb_key_h),      hello)
 
-        -- move focus up or down the window stack
-        , ((modMask, xkb_key_h),      sendMessage Shrink)       -- %! Shrink the master area
+        -- move focus
         , ((modMask, xkb_key_j),      windows W.focusDown)      -- %! Move focus to the next window
         , ((modMask, xkb_key_k),      windows W.focusUp)        -- %! Move focus to the previous window
+        , ((modMask, xkb_key_m),      windows W.focusMaster  )  -- %! Move focus to the master window
+
+        , ((modMask, xkb_key_h),      sendMessage Shrink)       -- %! Shrink the master area
         , ((modMask, xkb_key_l),      sendMessage Expand)       -- %! Expand the master area
 
-        , ((modMask, xkb_key_m),      windows W.focusMaster  )  -- %! Move focus to the master window
         ] ++
         [((m, k), windows $ f i)
             | (i, k) <- zip workspaces [xkb_key_1 .. xkb_key_9]
